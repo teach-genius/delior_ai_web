@@ -865,7 +865,7 @@
                 <span class="ag-modal-status-label">Statut :</span>
                 <span class="ag-badge" id="ag-profile-status"></span>
             </div>
-            {% if !user.is_active %}
+            {% if not user.is_active %}
             <div id="ag-approb-block" style="display:none;">
                 <button class="ag-btn-approve" onclick="agApprob()">
                     <i class="fa-solid fa-circle-check"></i> Approuver la demande

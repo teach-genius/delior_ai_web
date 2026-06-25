@@ -22,10 +22,8 @@ CV_NAME_RE      = re.compile(r'\bcv\b', re.IGNORECASE)
 
 MAILBOX = SHARED_MAILBOX
 
-
 def _h(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
-
 
 def _url(*parts: str) -> str:
     return f"{GRAPH_BASE}/users/{MAILBOX}/" + "/".join(parts)
@@ -78,8 +76,15 @@ def process_cv_file(file_path: str) -> tuple[bool, str]:
     except Exception as exc:
         logger.exception("[PROCESS] Erreur inattendue sur %s : %s", file_path, exc)
         return False, str(exc)
-    
+   
 def email_candidature_loader() -> int:
+    """
+    Lit les emails non lus de la boîte recrutement via Graph API,
+    télécharge les pièces jointes CV (pdf/docx/doc) des mails dont
+    le sujet contient « candidature », puis marque le mail comme lu.
+
+    Retourne le nombre de CV téléchargés.
+    """
     try:
         os.makedirs(SAVE_FOLDER, exist_ok=True)
     except Exception as exc:
@@ -112,11 +117,27 @@ def email_candidature_loader() -> int:
     for msg in messages:
         msg_id  = msg["id"]
         subject = msg.get("subject") or ""
-        saved_files: list[str] = []
 
         if not SUBJECT_FILTER.search(subject):
             continue
         logger.info("[EMAIL] Traitement : %s", subject)
+
+        try:
+            patch_resp = requests.patch(
+                _url("messages", msg_id),
+                headers={**_h(token), "Content-Type": "application/json"},
+                json={"isRead": True},
+            )
+            if not patch_resp.ok:
+                logger.warning(
+                    "[EMAIL] Échec marquage lu pour %s : %s — mail ignoré",
+                    msg_id, patch_resp.text,
+                )
+                continue 
+            logger.info("[EMAIL] Mail %s marqué comme lu", msg_id)
+        except Exception as exc:
+            logger.warning("[EMAIL] Erreur marquage lu mail %s : %s — mail ignoré", msg_id, exc)
+            continue
 
         try:
             att_resp = requests.get(
@@ -144,6 +165,14 @@ def email_candidature_loader() -> int:
         if skipped:
             logger.info("[EMAIL] Pièce(s) ignorée(s) : %s", skipped)
 
+        filename = cv_att["name"]
+        base, ext = os.path.splitext(filename)
+        filepath = os.path.join(SAVE_FOLDER, filename)
+
+        if os.path.exists(filepath):
+            logger.info("[EMAIL] CV déjà présent, ignoré : %s", filepath)
+            continue
+
         try:
             dl_resp = requests.get(
                 _url("messages", msg_id, "attachments", cv_att["id"], "$value"),
@@ -155,41 +184,14 @@ def email_candidature_loader() -> int:
             logger.error("[EMAIL] Téléchargement pièce jointe échoué %s : %s", cv_att["name"], exc)
             continue
 
-        filename = cv_att["name"]
-        filepath = os.path.join(SAVE_FOLDER, filename)
-
-        if os.path.exists(filepath):
-            base, ext = os.path.splitext(filename)
-            counter = 1
-            while os.path.exists(filepath):
-                filepath = os.path.join(SAVE_FOLDER, f"{base}_{counter}{ext}")
-                counter += 1
-
         try:
             with open(filepath, "wb") as f:
                 f.write(content_bytes)
-            saved_files.append(filepath)
             logger.info("[EMAIL] CV sauvegardé : %s", filepath)
             cv_count += 1
         except OSError as exc:
             logger.error("[EMAIL] Erreur écriture %s : %s", filename, exc)
             continue
-
-        try:
-            patch_resp = requests.patch(
-                _url("messages", msg_id),
-                headers={**_h(token), "Content-Type": "application/json"},
-                json={"isRead": True},
-            )
-            if patch_resp.ok:
-                logger.info("[EMAIL] Mail %s marqué comme lu", msg_id)
-            else:
-                logger.warning(
-                    "[EMAIL] Échec marquage lu pour %s : %s",
-                    msg_id, patch_resp.text,
-                )
-        except Exception as exc:
-            logger.warning("[EMAIL] Erreur marquage lu mail %s : %s", msg_id, exc)
 
     logger.info("[EMAIL] Total CV téléchargés : %d", cv_count)
     return cv_count

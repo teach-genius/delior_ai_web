@@ -11,8 +11,7 @@ from .state import AgentState
 from .memory import load_long_term_memory, save_long_term_memory
 from .tools.db_tool           import get_db_tools, get_schema_info
 from .tools.web_tool          import get_web_tools
-from .tools.esco_tool         import get_esco_tools
-from .tools.email_tool        import get_email_tools         
+from .tools.esco_tool         import get_esco_tools      
 from .tools.email_folder_tool import get_email_folder_tools 
 from .tools.notification_tool import get_notification_tools
 from langchain_core.runnables import RunnableConfig
@@ -23,7 +22,6 @@ logger = logging.getLogger(__name__)
 # ══════════════════════════════════════════════════════
 # PROMPTS
 # ══════════════════════════════════════════════════════
-
 DB_SYSTEM_PROMPT = """
 ## RÔLE
 Tu es un expert SQL PostgreSQL senior. Tu interroges la base RH de Delior Group en lecture seule.
@@ -100,18 +98,9 @@ Tu réponds toujours en français, de manière claire et concise (3-6 lignes max
 Tu gères les questions générales RH qui ne nécessitent pas de base de données,
 de recherche web ou de référentiel métier.
 
-## OUTILS EMAIL — ENVOI
-- envoyer_convocation   : convoquer un candidat à un entretien
-- envoyer_refus         : informer un candidat d'un refus
-- envoyer_relance       : relancer un candidat sans réponse
-- envoyer_email_libre   : envoyer un message personnalisé
-
 ## OUTILS EMAIL — GESTION BOÎTE
 - lister_dossiers_email    : voir tous les dossiers Gmail
-- creer_dossier_email      : créer un nouveau dossier
 - lister_emails_dossier    : voir les emails d'un dossier (avec filtres)
-- deplacer_emails          : déplacer des emails d'un dossier à un autre
-- trier_boite_reception    : trier automatiquement la boîte selon une règle
 
 ## OUTILS NOTIFICATIONS — CENTRE RH
 - creer_notification           : créer une notification dans le centre RH
@@ -120,16 +109,11 @@ de recherche web ou de référentiel métier.
 - marquer_notifications_lues   : marquer une ou toutes les notifications comme lues
 
 ## RÈGLES EMAIL
-- Toujours demander confirmation avant d'envoyer un email
-- Toujours demander confirmation avant de déplacer des emails en masse
-- Ne jamais supprimer d'emails — uniquement déplacer
 - Si l'email du candidat n'est pas fourni, le demander au RH
 - Confirmer chaque action avec un résumé clair
 
 ## RÈGLES NOTIFICATIONS
 - Créer automatiquement une notification après chaque action importante :
-  ✅ Email envoyé → tag Succes
-  ❌ Échec d'envoi → tag Error
   📋 Action RH réalisée → tag Infos
   ⚠️ Anomalie détectée → tag Warning
 - Ne jamais supprimer une notification
@@ -141,25 +125,11 @@ de recherche web ou de référentiel métier.
 - Emojis courts si utile (✅ ⚠️ 💡 📧 📁 🔔)
 """
 
-
-# ══════════════════════════════════════════════════════
-# HELPER : correction ordre des messages pour Mistral
-# ══════════════════════════════════════════════════════
-
 def _trim_trailing_ai(messages: list) -> list:
-    """
-    Mistral exige que le dernier message soit de rôle 'user' ou 'tool'.
-    Cette fonction supprime les AIMessage en fin de liste avant chaque appel API.
-    """
     messages = list(messages)
     while messages and isinstance(messages[-1], AIMessage):
         messages.pop()
     return messages
-
-
-# ══════════════════════════════════════════════════════
-# FACTORY GÉNÉRIQUE
-# ══════════════════════════════════════════════════════
 
 def _make_subgraph(llm, tools: list, system_prompt: str):
     """Sous-graphe générique LLM ↔ ToolNode."""
@@ -195,7 +165,6 @@ def _make_subgraph(llm, tools: list, system_prompt: str):
 # ══════════════════════════════════════════════════════
 # DB AGENT
 # ══════════════════════════════════════════════════════
-
 def make_db_agent(llm_db, extra_tools: list | None = None):
     tools          = get_db_tools() + (extra_tools or [])
     llm_with_tools = llm_db.bind_tools(tools)
@@ -239,7 +208,6 @@ def make_db_agent(llm_db, extra_tools: list | None = None):
 # ══════════════════════════════════════════════════════
 # WEB AGENT
 # ══════════════════════════════════════════════════════
-
 def make_web_agent(llm, extra_tools: list | None = None):
     tools     = get_web_tools() + (extra_tools or [])
     _compiled = _make_subgraph(llm, tools, WEB_SYSTEM_PROMPT)
@@ -254,7 +222,6 @@ def make_web_agent(llm, extra_tools: list | None = None):
 # ══════════════════════════════════════════════════════
 # ESCO AGENT
 # ══════════════════════════════════════════════════════
-
 def make_esco_agent(llm, extra_tools: list | None = None):
     tools     = get_esco_tools() + (extra_tools or [])
     _compiled = _make_subgraph(llm, tools, ESCO_SYSTEM_PROMPT)
@@ -267,15 +234,12 @@ def make_esco_agent(llm, extra_tools: list | None = None):
 
 
 # ══════════════════════════════════════════════════════
-# RH AGENT  (envoi email + gestion dossiers + notification)
+# RH AGENT 
 # ══════════════════════════════════════════════════════
-
 def make_rh_agent(llm, store, extra_tools: list | None = None):
-    # Tous les outils email regroupés
-    tools     = get_email_tools() + get_notification_tools() + get_email_folder_tools() + (extra_tools or [])
+    tools     = get_notification_tools() + get_email_folder_tools() + (extra_tools or [])
     llm_bound = llm.bind_tools(tools)
     tool_node = ToolNode(tools=tools)
-
     async def call_llm(
         state: AgentState,
         config: RunnableConfig | None = None,

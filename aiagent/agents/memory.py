@@ -5,7 +5,6 @@ logger = logging.getLogger(__name__)
 
 MEMORY_NAMESPACE = ("delior_rh", "recruiter_memory")
 
-
 async def load_long_term_memory(store, user_id: str) -> str:
     try:
         item = await store.aget(MEMORY_NAMESPACE, user_id)
@@ -20,7 +19,6 @@ async def load_long_term_memory(store, user_id: str) -> str:
     except Exception as e:
         logger.warning(f"[load_long_term_memory] {e}")
     return ""
-
 
 async def save_long_term_memory(store, user_id: str, new_fact: str) -> None:
     try:

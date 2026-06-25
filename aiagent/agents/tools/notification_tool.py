@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 # ══════════════════════════════════════════════════════════════════
 # OUTIL 1 : Créer une notification
 # ══════════════════════════════════════════════════════════════════
-
 @tool
 def creer_notification(
     content: str,

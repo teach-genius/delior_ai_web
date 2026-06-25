@@ -34,7 +34,6 @@
         margin-top: 2px;
     }
 
-    /* Grille Responsive : 2 colonnes par défaut */
     .compte-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -51,7 +50,7 @@
         flex-direction: column;
         animation: fadeUp .35s ease both;
         transition: box-shadow .2s, transform .2s;
-        width: 100%; /* S'assure que la carte prend la largeur de sa cellule */
+        width: 100%; 
     }
 
     .compte-card:nth-child(1){ animation-delay:.04s }
@@ -316,18 +315,12 @@
     }
 
     /* ══ RESPONSIVE MEDIA QUERIES ══ */
-    
-    /* Tablettes et écrans moyens : Passage à 1 colonne pour la grille principale */
     @media (max-width: 1024px) {
         .compte-grid {
             grid-template-columns: 1fr;
         }
-        
-        /* On peut garder les cartes côte à côte si on veut, mais ici on empile pour la clarté */
-        /* Si vous préférez garder 2 cartes côte à côte sur tablette, supprimez le bloc ci-dessus */
     }
 
-    /* Mobiles et petits écrans : Ajustements internes */
     @media (max-width: 768px) {
         .cp-header {
             flex-direction: column;
@@ -335,12 +328,12 @@
         }
 
         .compte-grid {
-            grid-template-columns: 1fr; /* Force 1 colonne sur mobile */
+            grid-template-columns: 1fr; 
             gap: 20px;
         }
 
         .fm-grid {
-            grid-template-columns: 1fr; /* Champs empilés dans les formulaires */
+            grid-template-columns: 1fr; 
         }
 
         .avatar-card-body {
@@ -502,7 +495,6 @@
 <script>
     document.getElementById('imageInput').addEventListener('change', function () {
         if (this.files.length > 0) {
-            // Optionnel : Ajouter une confirmation ou un loader avant soumission auto
             document.getElementById('avatar-form').submit();
         }
     });

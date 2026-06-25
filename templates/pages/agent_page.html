@@ -93,9 +93,8 @@
         border-radius: 30px;
         padding: 0 14px;
         height: 36px;
-        /* Largeur flexible mais avec un minimum confortable */
         min-width: 200px; 
-        flex: 1 1 240px; /* Grandit et rétrécit, base 240px */
+        flex: 1 1 240px; 
         max-width: 400px;
         transition: border-color .2s, box-shadow .2s;
     }
@@ -227,7 +226,6 @@
         flex-direction: column;
     }
 
-    /* Conteneur scrollable pour les très petits écrans */
     .ag-table-wrapper {
         width: 100%;
         overflow-x: auto;
@@ -235,7 +233,6 @@
 
     .ag-table-head {
         display: grid;
-        /* Colonnes responsives : Photo fixe, autres flexibles avec min-width */
         grid-template-columns: 50px minmax(150px, 1.5fr) minmax(100px, 1fr) minmax(180px, 1.5fr) minmax(120px, 1fr) 100px 100px;
         gap: 8px;
         padding: 11px 20px;
@@ -246,7 +243,7 @@
         text-transform: uppercase;
         letter-spacing: 0.7px;
         color: #8a94a6;
-        min-width: 700px; /* Force le scroll si trop petit */
+        min-width: 700px; 
     }
 
     .ag-th {
@@ -271,7 +268,7 @@
         cursor: pointer;
         transition: background .12s;
         animation: ag-fadeIn .25s ease both;
-        min-width: 700px; /* Synchronisé avec le header */
+        min-width: 700px; 
     }
 
     .ag-row:last-child { border-bottom: none; }
@@ -287,7 +284,7 @@
         align-items: center;
         font-size: 12.5px;
         color: #374151;
-        min-width: 0; /* Important pour text-overflow */
+        min-width: 0; 
     }
 
     .ag-cell.center { justify-content: center; }
@@ -868,11 +865,13 @@
                 <span class="ag-modal-status-label">Statut :</span>
                 <span class="ag-badge" id="ag-profile-status"></span>
             </div>
+            {% if !user.is_active %}
             <div id="ag-approb-block" style="display:none;">
                 <button class="ag-btn-approve" onclick="agApprob()">
                     <i class="fa-solid fa-circle-check"></i> Approuver la demande
                 </button>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>

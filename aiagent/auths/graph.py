@@ -1,5 +1,5 @@
 import requests
-from aiagent.auths.config import GRAPH_BASE
+from aiagent.auths.config import GRAPH_BASE,SHARED_MAILBOX
 
 def _headers(token):
     return {"Authorization": f"Bearer {token}"}
@@ -55,26 +55,6 @@ def get_delta(token, delta_token=None):
     next_delta = data.get("@odata.deltaLink", "").split("$deltatoken=")[-1] or None
     return messages, next_delta
 
-
-
-# graph.py — add these functions
-
-SHARED_MAILBOX = "recrutement@deliorgroup.com"
-# def get_shared_inbox(token, top=20):
-#     """Fetch latest messages from the shared mailbox inbox."""
-#     resp = requests.get(
-#         f"{GRAPH_BASE}/users/{SHARED_MAILBOX}/mailFolders/inbox/messages",
-#         headers=_headers(token),
-#         params={
-#             "$top": top,
-#             "$select": "subject,from,receivedDateTime,isRead,bodyPreview",
-#             "$orderby": "receivedDateTime desc"
-#         }
-#     )
-#     resp.raise_for_status()
-#     return resp.json().get("value", [])
-
-
 def get_shared_inbox(token, top=20):
     resp = requests.get(
         f"{GRAPH_BASE}/users/{SHARED_MAILBOX}/mailFolders/inbox/messages",
@@ -90,7 +70,6 @@ def get_shared_inbox(token, top=20):
         print(f"  error  : {resp.json()}")
     resp.raise_for_status()
     return resp.json().get("value", [])
-
 
 
 def get_shared_unread(token, top=10):

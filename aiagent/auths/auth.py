@@ -68,7 +68,3 @@ def get_token():
         raise Exception(f"Auth failed: {result.get('error_description')}")
 
     return result["access_token"]
-
-if __name__ == '__main__':
-    print('start')	
-    get_token()

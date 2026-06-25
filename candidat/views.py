@@ -60,13 +60,11 @@ def cv_math_view(request):
 
         logger.info("cv_math_view [%s] query = %.120s…", mode, query)
 
-        # ── Sauvegarde query ──────────────────────────────────
         try:
             QueryMatching.objects.create(content=query, agent_deliore=request.user)
         except Exception as exc:
             logger.warning("cv_math_view : QueryMatching non sauvegardé — %s", exc)
 
-        # ── Matching vectoriel ────────────────────────────────
         try:
             candidat_hits = recommendation_candidat_cv_impl(query, 5)
         except Exception as exc:
@@ -77,7 +75,6 @@ def cv_math_view(request):
             logger.info("cv_math_view : aucun hit vectoriel retourné")
             return render(request, "includes/_top_match.html", {"cvs": cvs})
 
-        # ── Extraction IDs ordonnés (ordre reranker) ──────────
         hit_ids = []
         for hit in candidat_hits:
             try:
@@ -91,7 +88,6 @@ def cv_math_view(request):
             logger.info("cv_math_view : aucun candidat_id extrait des hits")
             return render(request, "includes/_top_match.html", {"cvs": cvs})
 
-        # ── Queryset final — ordre vectoriel préservé ─────────
         ordering = Case(
             *[When(candidat_id=pk, then=pos) for pos, pk in enumerate(hit_ids)]
         )
@@ -218,7 +214,6 @@ async def chat_bot_view(request):
         if not user_message:
             return JsonResponse({"status": "error", "message": "Message vide"}, status=400)
 
-        # Contexte utilisateur complet
         user_context = {
             "id"   : str(request.user.identifiant)
         }

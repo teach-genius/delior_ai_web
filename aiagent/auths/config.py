@@ -10,3 +10,4 @@ AUTHORITY   = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPES      = ["https://graph.microsoft.com/Mail.Read.Shared"]
 GRAPH_BASE  = "https://graph.microsoft.com/v1.0"
 
+SHARED_MAILBOX = "recrutement@deliorgroup.com"

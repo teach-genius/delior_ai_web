@@ -9,41 +9,24 @@ from django_redis import get_redis_connection
 
 logger = logging.getLogger(__name__)
 
-# ── Constantes ────────────────────────────────────────────────────────────────
 
 CV_EXTENSIONS = {".pdf", ".docx", ".doc"}
 LOCK_TTL      = 600 
 
-
-# ── Helpers Redis lock ────────────────────────────────────────────────────────
-
 def _lock_key(path: str) -> str:
     return f"cv_lock:{path}"
 
-
 def _acquire_lock(rc, path: str, task_id: str) -> bool:
-    """
-    Pose un verrou atomique NX/EX sur le fichier.
-    Retourne True si le verrou a été acquis, False s'il était déjà posé.
-    """
     return bool(rc.set(_lock_key(path), task_id, nx=True, ex=LOCK_TTL))
-
 
 def _release_lock(rc, path: str) -> None:
     rc.delete(_lock_key(path))
 
-
 def _is_locked(rc, path: str) -> bool:
     return bool(rc.exists(_lock_key(path)))
 
-
-# ── Nettoyage dossier session ─────────────────────────────────────────────────
-
 def _cleanup_session_if_empty(session_folder: str | None) -> None:
-    """
-    Supprime le dossier session s'il n'existe plus ou s'il est vide.
-    Appel silencieux — ne lève jamais d'exception.
-    """
+
     if not session_folder:
         return
     try:
@@ -90,7 +73,6 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         return {"status": "success", "message": msg}
 
     except ValueError as e:
-        # Données insuffisantes — pas de retry
         logger.warning("[CELERY] CV ignoré : %s", e)
         return {"status": "ignored", "reason": str(e)}
 
@@ -99,7 +81,6 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         raise self.retry(exc=exc)
 
     finally:
-        # Toujours exécuté — lock + cleanup garantis
         _release_lock(rc, path)
         _cleanup_session_if_empty(session_folder)
         
@@ -128,7 +109,6 @@ def load_emails_task(self):
         count = email_candidature_loader()
         logger.info("[EMAIL_TASK] %d email(s) traité(s)", count)
 
-        # Dispatch des fichiers téléchargés
         rc             = get_redis_connection("default")
         email_folder   = Path(SAVE_FOLDER)
         dispatched     = 0
@@ -195,7 +175,6 @@ def watchdog_task():
             ]
 
             if not files:
-                # Session terminée (ou corrompue sans fichiers) → nettoyage
                 shutil.rmtree(str(session_dir), ignore_errors=True)
                 cleaned += 1
                 logger.info("[WATCHDOG] Dossier session vide supprimé : %s", session_dir.name)

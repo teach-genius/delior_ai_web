@@ -15,15 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 async def _build_graph():
-    """
-    Construit le graphe entièrement à chaque requête.
-    LLMs, Redis checkpointer et store sont tous recréés dans le loop courant.
-    Nécessaire car Django crée un nouveau event loop par requête en développement.
-    """
     checkpointer = await get_checkpointer()
     store        = await get_store()
-    llm          = get_llm()      # nouvelle instance liée au loop courant
-    llm_db       = get_llm_DB()   # idem
+    llm          = get_llm()     
+    llm_db       = get_llm_DB() 
 
     builder = StateGraph(AgentState)
     builder.add_node("supervisor", make_supervisor(llm))
@@ -43,7 +38,6 @@ async def _build_graph():
 
 def _format_response(text: str) -> str:
     return markdown.markdown(text or "", extensions=["nl2br"])
-
 
 async def ask_assistant(user_context: dict, user_message: str) -> str:
     try:
@@ -70,8 +64,3 @@ async def ask_assistant(user_context: dict, user_message: str) -> str:
     except Exception as e:
         logger.error(f"[ask_assistant] {type(e).__name__}: {e}")
         return "Une erreur technique est survenue. Merci de réessayer."
-
-
-def reset_graph() -> None:
-    """Conservé pour compatibilité, sans effet en mode sans singleton."""
-    logger.info("[graph] reset_graph appelé (sans effet)")

@@ -11,16 +11,12 @@ load_dotenv()
 logger    = logging.getLogger(__name__)
 REDIS_URL = os.getenv("REDIS_URL")
 
-
 async def get_checkpointer() -> AsyncRedisSaver:
-    """Nouvelle instance à chaque appel — compatible multi-loop Django/ASGI."""
     saver = AsyncRedisSaver(redis_url=REDIS_URL)
     await saver.setup()
     return saver
 
-
 async def get_store() -> AsyncRedisStore:
-    """Nouvelle instance à chaque appel — compatible multi-loop Django/ASGI."""
     store = AsyncRedisStore(redis_url=REDIS_URL)
     await store.setup()
     return store

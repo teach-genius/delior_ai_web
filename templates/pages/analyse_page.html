@@ -1,0 +1,1150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analyse & Matching{% endblock %}
+
+{% block content_main %}
+
+{% include 'objets/formulaire_offre.html' %}
+
+<style>
+.an-page {
+    --an-accent:       #3b5bdb;
+    --an-accent-light: #eef2ff;
+    --an-accent-mid:   #c5d0f7;
+    --an-border:       #e4e9f2;
+    --an-border-2:     #d0d8ea;
+    --an-text-1:       #0d1117;
+    --an-text-2:       #4a5568;
+    --an-text-3:       #8a94a6;
+    --an-surface:      #ffffff;
+    --an-bg:           #f8fafd;
+    --an-radius:       16px;
+    --an-radius-sm:    10px;
+    --an-shadow-sm:    0 1px 3px rgba(0,0,0,.06);
+    --an-shadow-lg:    0 12px 40px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+    --an-gold:         #d6a764;
+    --an-gold-dk:      #c4924d;
+    --an-danger:       #f43f5e;
+    --an-green:        #10b981;
+    --an-nav-h:        var(--nav-h, 58px);
+}
+
+.an-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: calc(100vh - var(--an-nav-h) - 50px); 
+    min-height: 600px;
+    padding-bottom: 0;
+    overflow: hidden; 
+}
+
+.an-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.an-title-group { display: flex; align-items: center; gap: 10px; }
+
+.an-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800;
+    color: #0d1117; letter-spacing: -0.5px;
+    line-height: 1.2; margin: 0; padding: 0;
+    border: none; background: none;
+}
+
+.an-subtitle {
+    font-size: 12px; color: #8a94a6; margin-top: 2px;
+}
+
+/* ══ LAYOUT PRINCIPAL ══ */
+.an-layout {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    min-height: 0; 
+    width: 100%;
+}
+
+.an-col-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.an-col-right {
+    width: 340px; 
+    max-width: 35%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* ══ PANELS ══ */
+.an-panel {
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.an-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-bottom: 1.5px solid #e4e9f2;
+    flex-shrink: 0;
+    background: #fafbfe;
+    gap: 10px;
+}
+
+.an-panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 800;
+    color: #0d1117;
+    display: flex; align-items: center; gap: 9px;
+    flex-shrink: 0;
+}
+
+.an-panel-title-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+}
+
+.ic-blue   { background: #eef2ff; color: #3b5bdb; }
+.ic-gold   { background: #fdf8e8; color: #d6a764; }
+.ic-green  { background: #ecfdf5; color: #10b981; }
+.ic-pink   { background: #fff0f3; color: #f43f5e; }
+
+.an-panel-body {
+    padding: 10px 18px;
+    flex: 1; 
+    min-height: 0; 
+    overflow: hidden;
+    position: relative;
+}
+
+/* ══ QUERY PANEL ══ */
+.an-query-panel { flex-shrink: 0; }
+
+.an-query-row {
+    display: flex; gap: 12px; align-items: flex-start;
+}
+
+.an-query-box { flex: 1; position: relative; }
+
+#an-query {
+    width: 100%;
+    min-height: 64px; max-height: 120px;
+    border: 1.5px solid #e4e9f2;
+    border-radius: var(--an-radius-sm);
+    padding: 11px 14px 28px;
+    font-size: 13px; font-family: inherit;
+    color: #0d1117; background: #f8fafd;
+    resize: none; outline: none;
+    line-height: 1.6;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    box-sizing: border-box;
+}
+
+#an-query:focus {
+    border-color: var(--an-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.08);
+    background: #fff;
+}
+
+#an-query::placeholder { color: #a0aab8; font-size: 12.5px; }
+
+.an-char-count {
+    position: absolute; bottom: 9px; right: 12px;
+    font-size: 10px; color: #a0aab8; font-weight: 500;
+    pointer-events: none;
+}
+
+.an-char-count.warn { color: #f59e0b; }
+.an-char-count.ok   { color: #10b981; }
+
+.an-query-actions {
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+.an-btn {
+    display: inline-flex; align-items: center;
+    justify-content: center; gap: 7px;
+    padding: 0 18px; height: 40px;
+    border-radius: var(--an-radius-sm);
+    font-size: 12.5px; font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer; border: none;
+    transition: all .15s; white-space: nowrap;
+}
+
+.an-btn:active { transform: scale(0.97); }
+
+.an-btn-primary { background: var(--an-accent); color: #fff; }
+.an-btn-primary:hover {
+    background: #2f4ac7;
+    box-shadow: 0 4px 14px rgba(59,91,219,.35);
+    transform: translateY(-1px);
+}
+
+.an-btn-ghost {
+    background: #f8fafd; color: var(--an-text-2);
+    border: 1.5px solid var(--an-border);
+}
+.an-btn-ghost:hover {
+    background: var(--an-accent-light);
+    border-color: var(--an-accent-mid);
+    color: var(--an-accent);
+}
+
+.an-btn-offre.has-data {
+    background: #fdf8e8; border-color: #fcd34d; color: #b45309;
+}
+.an-btn-offre.has-data:hover {
+    background: #fef3c7; border-color: #f59e0b; color: #92400e;
+}
+
+.an-offre-badge {
+    display: none; align-items: center; gap: 6px;
+    padding: 3px 10px; background: #fefce8;
+    border: 1.5px solid #fde68a; border-radius: 20px;
+    font-size: 11px; color: #92400e; font-weight: 500;
+    flex: 1; min-width: 0; max-width: 340px;
+}
+
+.an-offre-badge.show { display: flex; }
+.an-offre-badge i { color: #d6a764; flex-shrink: 0; font-size: 10px; }
+
+.an-offre-badge strong {
+    font-weight: 700; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;
+}
+
+.an-offre-badge-clear {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: #fff3cd; border: 1px solid #fcd34d;
+    border-radius: 6px; padding: 2px 7px;
+    font-size: 10px; color: #92400e; cursor: pointer;
+    font-family: inherit; font-weight: 600;
+    white-space: nowrap; flex-shrink: 0; transition: background .15s;
+}
+.an-offre-badge-clear:hover { background: #fde68a; }
+
+/* ══ RESULTS PANEL ══ */
+.an-results-panel {
+    height: 380px; 
+    flex-grow: 1;   
+}
+
+.an-results-body {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: flex-start;
+    padding-bottom: 4px;
+}
+
+.an-results-body.empty {
+    justify-content: center;
+    align-items: center;
+}
+
+.an-results-grid {
+    display: flex;
+    gap: 14px;
+    height: 100%;
+    min-height: 260px;
+    padding: 4px 2px 8px;
+    align-items: stretch;
+    width: max-content; 
+}
+
+.match-card {
+    flex: 0 0 auto;
+    width: 180px; 
+    height: 100%;
+    max-height: 360px;
+    display: flex;
+    flex-direction: column;
+}
+
+.match-preview {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    background: #f0f3fa;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+}
+
+.an-results-body::-webkit-scrollbar { height: 6px; }
+.an-results-body::-webkit-scrollbar-thumb { background: #d0d8ea; border-radius: 4px; }
+.an-results-body::-webkit-scrollbar-track { background: #f1f5f9; }
+
+.an-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%; gap: 12px; color: #8a94a6;
+    max-height: 300px;
+}
+
+.an-empty-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: #f4f6fb; border: 2px dashed #d0d8ea;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #c0c8d8;
+}
+
+.an-empty p     { font-size: 13px; font-weight: 600; color: #4a5568; }
+.an-empty small { font-size: 11px; }
+
+.match-card:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,.12);
+    transform: translateY(-3px);
+    border-color: #d0d8ea;
+}
+
+@keyframes mc-fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.match-card:nth-child(1){animation-delay:.04s}
+.match-card:nth-child(2){animation-delay:.08s}
+.match-card:nth-child(3){animation-delay:.12s}
+.match-card:nth-child(4){animation-delay:.16s}
+.match-card:nth-child(5){animation-delay:.20s}
+
+.match-band {
+    height: 4px; width: 100%; display: block; flex-shrink: 0;
+    border-radius: 12px 12px 0 0;
+}
+.rank-1 .match-band { background: linear-gradient(90deg,#fbbf24,#f59e0b); }
+.rank-2 .match-band { background: linear-gradient(90deg,#94a3b8,#64748b); }
+.rank-3 .match-band { background: linear-gradient(90deg,#fb923c,#ea580c); }
+.match-card:not(.rank-1):not(.rank-2):not(.rank-3) .match-band {
+    background: linear-gradient(90deg,#60a5fa,#3b82f6);
+}
+
+.match-rank {
+    position: absolute; top: 12px; left: 10px; z-index: 2;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+
+.rank-1 .match-rank { background: #fef3c7; color: #d97706; }
+.rank-2 .match-rank { background: #f1f5f9; color: #64748b; }
+.rank-3 .match-rank { background: #fff7ed; color: #c2642a; }
+.match-card:not(.rank-1):not(.rank-2):not(.rank-3) .match-rank {
+    background: #eef2ff; color: #3b5bdb; font-size: 10px;
+}
+
+.match-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform .35s ease;
+}
+
+.match-card:hover .match-preview img { transform: scale(1.04); }
+
+.match-footer {
+    padding: 10px 12px 12px;
+    border-top: 1.5px solid #e4e9f2;
+    display: flex; flex-direction: column; gap: 8px;
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+}
+
+.match-info { display: flex; align-items: center; justify-content: space-between; }
+
+.match-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 800; color: #0d1117;
+}
+
+.match-state {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 9.5px; color: #8a94a6; font-weight: 500;
+}
+
+.state-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #10b981; flex-shrink: 0;
+}
+
+.match-actions { display: flex; gap: 5px; }
+
+.match-btn {
+    flex: 1; height: 30px; border-radius: 8px;
+    border: 1.5px solid #e4e9f2; background: #f8fafd;
+    font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; color: #4a5568;
+}
+
+.match-btn:hover { transform: translateY(-1px); }
+.btn-generate:hover    { background: #eef2ff; border-color: #c5d0f7; color: #3b5bdb; }
+.btn-view-cv:hover     { background: #ecfdf5; border-color: #6ee7b7; color: #10b981; }
+.btn-view-report:hover { background: #f3f0ff; border-color: #ddd6fe; color: #7c3aed; }
+
+/* ══ CHAT ══ */
+.an-chat {
+    flex: 1; min-height: 0;
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.an-chat-head {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1.5px solid #e4e9f2;
+    flex-shrink: 0;
+    background: #0a0f1e;
+    position: relative;
+}
+
+.an-chat-head::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, #3b5bdb, #818cf8, #f472b6);
+}
+
+.an-chat-brand {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 800; color: #fff;
+}
+
+.an-chat-brand img { width: 22px; height: 20px; object-fit: contain; }
+.an-chat-brand span { color: #d6a764; }
+
+.an-chat-status {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 9.5px; color: rgba(255,255,255,.45);
+    font-weight: 500;
+}
+
+.an-chat-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16,185,129,.3);
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+.an-chat-clear {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color: rgba(255,255,255,.45); font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+}
+.an-chat-clear:hover { background: rgba(244,63,94,.2); color: #f43f5e; border-color: rgba(244,63,94,.3); }
+
+.an-chat-body {
+    flex: 1; min-height: 0;
+    overflow-y: auto; overflow-x: hidden;
+    display: flex; flex-direction: column;
+}
+
+.an-chat-body::-webkit-scrollbar { width: 3px; }
+.an-chat-body::-webkit-scrollbar-thumb { background: #e4e9f2; border-radius: 3px; }
+
+.an-chat-welcome {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; padding: 20px 14px;
+    height: 100%;
+}
+
+#an-lottie { width: 90px; height: 90px; }
+
+.an-chat-suggestions { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+
+.an-suggestion {
+    padding: 9px 12px;
+    background: #f8fafd;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 10px;
+    font-size: 11px; color: #4a5568;
+    cursor: pointer; line-height: 1.4;
+    transition: all .15s; font-weight: 500;
+}
+
+.an-suggestion:hover {
+    background: #eef2ff;
+    border-color: #c5d0f7;
+    color: #3b5bdb;
+    transform: translateX(3px);
+}
+
+/* ══ MESSAGES ══ */
+.an-chat-messages {
+    display: flex; flex-direction: column;
+    gap: 10px;
+    padding: 14px 14px 18px;
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+.an-msg {
+    max-width: 86%;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 12px; line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.an-msg.user {
+    align-self: flex-end;
+    background: var(--an-accent);
+    color: #fff;
+    border-radius: 12px 12px 3px 12px;
+}
+
+.an-msg.bot {
+    align-self: flex-start;
+    background: #f4f6fb;
+    color: #0d1117;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 12px 12px 12px 3px;
+}
+
+.an-msg.bot .an-msg-content p            { margin: 0 0 6px; }
+.an-msg.bot .an-msg-content p:last-child { margin-bottom: 0; }
+.an-msg.bot .an-msg-content strong       { font-weight: 700; }
+.an-msg.bot .an-msg-content em           { font-style: italic; }
+.an-msg.bot .an-msg-content ul,
+.an-msg.bot .an-msg-content ol           { padding-left: 16px; margin: 4px 0; }
+.an-msg.bot .an-msg-content li           { margin-bottom: 2px; }
+.an-msg.bot .an-msg-content code         {
+    background: #e8ecf4; padding: 1px 5px;
+    border-radius: 4px; font-size: 11px;
+    font-family: monospace;
+}
+
+.an-msg-time {
+    font-size: 9px; color: rgba(255,255,255,.5);
+    text-align: right; margin-top: 4px;
+}
+
+.an-msg.bot .an-msg-time { color: #a0aab8; }
+
+.an-thinking {
+    align-self: flex-start;
+    display: flex; align-items: center; gap: 5px;
+    padding: 9px 13px;
+    background: #f4f6fb;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 12px 12px 12px 3px;
+    margin-bottom: 4px;
+}
+
+.an-thinking-dots span {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: #8a94a6; border-radius: 50%;
+    animation: an-blink 1.4s infinite both;
+}
+
+.an-thinking-dots span:nth-child(2) { animation-delay: .2s; }
+.an-thinking-dots span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes an-blink {
+    0%, 80%, 100% { opacity: 0; transform: scale(.8); }
+    40% { opacity: 1; transform: scale(1); }
+}
+
+.an-chat-footer {
+    padding: 10px 12px 12px;
+    border-top: 1.5px solid #e4e9f2;
+    flex-shrink: 0;
+    background: #fafbfe;
+}
+
+.an-chat-input-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 24px;
+    padding: 6px 7px 6px 14px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.an-chat-input-wrap:focus-within {
+    border-color: var(--an-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.08);
+}
+
+#an-chat-input {
+    flex: 1; border: none; background: transparent;
+    outline: none; font-size: 12.5px; font-family: inherit;
+    color: #0d1117;
+}
+
+#an-chat-input::placeholder { color: #a0aab8; }
+
+.an-send-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--an-danger);
+    color: #fff; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+    transition: background .15s, transform .1s;
+}
+
+.an-send-btn:hover  { background: #e02255; }
+.an-send-btn:active { transform: scale(0.9); }
+
+/* ══ RESPONSIVE MEDIA QUERIES ══ */
+
+@media (max-width: 1200px) {
+    .an-col-right {
+        width: 300px;
+        max-width: 30%;
+    }
+    
+    .match-card {
+        width: 160px;
+    }
+}
+
+@media (max-width: 992px) {
+    .an-page {
+        height: auto; 
+        min-height: 100vh;
+        padding-bottom: 20px;
+        overflow-y: auto;
+    }
+
+    .an-layout {
+        flex-direction: column; 
+        height: auto;
+    }
+
+    .an-col-left, .an-col-right {
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+    }
+
+    .an-chat {
+        height: 500px;
+        min-height: 400px;
+    }
+
+    .an-results-panel {
+        height: 320px;
+    }
+    
+    .an-results-grid {
+        justify-content: flex-start; 
+    }
+}
+
+@media (max-width: 768px) {
+    .an-title { font-size: 18px; }
+    .an-panel-head { padding: 10px 14px; }
+    .an-query-row { flex-direction: column; }
+    .an-query-actions { width: 100%; flex-direction: row; }
+    .an-btn { flex: 1; }
+    
+    .match-card { width: 140px; }
+    .an-chat { height: 400px; }
+}
+</style>
+
+{{ message|safe }}
+
+<div class="an-page">
+
+    <div class="an-header">
+        <div class="an-title-group">
+            <div>
+                <h1 class="an-title">Analyse & Matching</h1>
+                <p class="an-subtitle">Recherche sémantique et matching IA sur les CV importés</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="an-layout">
+        <div class="an-col-left">
+
+            <!-- ── Panel query ── -->
+            <div class="an-panel an-query-panel">
+                <div class="an-panel-head">
+                    <div class="an-panel-title">
+                        <div class="an-panel-title-icon ic-blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b5bdb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h5.697" /><path d="M18 12v-5a2 2 0 0 0 -2 -2h-2" /><path d="M8 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /><path d="M8 11h4" /><path d="M8 15h3" /><path d="M14 17.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0" /><path d="M18.5 19.5l2.5 2.5" /></svg>
+                        </div>
+                        Recherche & Matching CV
+                    </div>
+
+                    <div class="an-offre-badge" id="an-offre-badge">
+                        <i class="fa-solid fa-file-lines"></i>
+                        Offre : <strong id="an-offre-badge-title">—</strong>
+                        <button class="an-offre-badge-clear" onclick="anClearOffre()">
+                            <i class="fa-solid fa-xmark"></i> Effacer
+                        </button>
+                    </div>
+
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <span id="an-match-count"
+                              style="font-size:11px;color:#8a94a6;font-weight:500;"></span>
+                    </div>
+                </div>
+
+                <div class="an-panel-body">
+                    <div class="an-query-row">
+                        <div class="an-query-box">
+                            <textarea id="an-query"
+                                      placeholder="Décrivez le profil recherché ou collez une description de poste…"
+                                      oninput="anCharCount(this)"></textarea>
+                            <span class="an-char-count" id="an-char-count">0 / 300</span>
+                        </div>
+                        <div class="an-query-actions">
+                            <button class="an-btn an-btn-primary" onclick="anMatching()">
+                                <i class="fa-solid fa-bolt"></i>
+                                Matching
+                            </button>
+                            <button class="an-btn an-btn-ghost an-btn-offre" id="an-btn-offre"
+                                    onclick="openforme()">
+                                <i class="fa-solid fa-pen-to-square" id="an-offre-icon"></i>
+                                <span id="an-offre-label">Nouvelle offre</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Panel résultats ── -->
+            <div class="an-panel an-results-panel">
+                <div class="an-panel-head">
+                    <div class="an-panel-title">
+                        <div class="an-panel-title-icon ic-gold">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        Résultats du matching
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span id="an-results-count"
+                              style="font-size:11px;color:#8a94a6;font-weight:500;"></span>
+                        <button class="an-btn an-btn-ghost" id="an-clear-results"
+                                style="height:28px;padding:0 10px;font-size:11px;display:none;"
+                                onclick="anClearResults()">
+                            <i class="fa-solid fa-xmark"></i> Effacer
+                        </button>
+                    </div>
+                </div>
+                <div class="an-panel-body an-results-body empty" id="an-results-body">
+                    <div id="an-results-grid" class="an-results-grid">
+                        <div class="an-empty">
+                            <div class="an-empty-icon">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <p>Aucun résultat</p>
+                            <small>Décrivez un profil et lancez le matching</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── Col droite : chat ── -->
+        <div class="an-col-right">
+            <div class="an-chat">
+
+                <div class="an-chat-head">
+                    <div>
+                        <div class="an-chat-brand">
+                            <img src="{% static 'imgs/symbole.png' %}" alt="">
+                            Delior<span>AI</span>
+                        </div>
+                        <div class="an-chat-status" style="margin-top:3px;">
+                            <div class="an-chat-status-dot"></div>
+                            Assistant disponible
+                        </div>
+                    </div>
+                    <button class="an-chat-clear" onclick="anClearChat()"
+                            title="Nouvelle conversation">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <div class="an-chat-body" id="an-chat-body">
+                    <div class="an-chat-welcome" id="an-chat-welcome">
+                        <div id="an-lottie"></div>
+                        <div class="an-chat-suggestions">
+                            <div class="an-suggestion" onclick="anSendSuggestion(this)">
+                                Combien de CV sont en cours de traitement ?
+                            </div>
+                            <div class="an-suggestion" onclick="anSendSuggestion(this)">
+                                Combien de candidatures reçues ce mois ?
+                            </div>
+                            <div class="an-suggestion" onclick="anSendSuggestion(this)">
+                                Quel est le salaire moyen d'un pâtissier au Maroc ?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="an-chat-messages" id="an-chat-messages"
+                         style="display:none;"></div>
+                </div>
+
+                <div class="an-chat-footer">
+                    <div class="an-chat-input-wrap">
+                        <input type="text" id="an-chat-input"
+                               placeholder="Posez une question…">
+                        <button class="an-send-btn" onclick="anSendChat()">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+lottie.loadAnimation({
+    container: document.getElementById('an-lottie'),
+    renderer: 'svg', loop: true, autoplay: true,
+    path: "{% static 'animations/AI_chat_bot.json' %}"
+});
+
+let anOffreData = null;
+
+function anOnOffreSaved(offreObj) {
+    anOffreData = offreObj;
+    const titre = offreObj?.poste?.titre_professionnel || 'Sans titre';
+
+    document.getElementById('an-offre-badge-title').textContent = titre;
+    document.getElementById('an-offre-badge').classList.add('show');
+
+    const btn = document.getElementById('an-btn-offre');
+    btn.classList.add('has-data');
+    document.getElementById('an-offre-icon').className    = 'fa-solid fa-pen-to-square';
+    document.getElementById('an-offre-label').textContent = "Modifier l'offre";
+
+    closeforme();
+}
+
+function anClearOffre() {
+    anOffreData = null;
+    document.getElementById('an-offre-badge').classList.remove('show');
+    const btn = document.getElementById('an-btn-offre');
+    btn.classList.remove('has-data');
+    document.getElementById('an-offre-icon').className    = 'fa-solid fa-plus';
+    document.getElementById('an-offre-label').textContent = 'Nouvelle offre';
+}
+
+function anCharCount(el) {
+    const n   = el.value.length;
+    const cnt = document.getElementById('an-char-count');
+    cnt.textContent = `${n} / 300`;
+    cnt.className   = 'an-char-count' + (n >= 300 ? ' ok' : n > 200 ? ' warn' : '');
+}
+
+async function anMatching() {
+    const grid   = document.getElementById('an-results-grid');
+    const body   = document.getElementById('an-results-body');
+    const count  = document.getElementById('an-results-count');
+    const clearB = document.getElementById('an-clear-results');
+
+    let payload = {};
+
+    if (anOffreData) {
+        payload = { mode: 'offre', offre: anOffreData };
+    } else {
+        const query = document.getElementById('an-query').value.trim();
+        if (query.length < 10) {
+            const ta = document.getElementById('an-query');
+            ta.focus();
+            ta.style.borderColor = '#f43f5e';
+            setTimeout(() => ta.style.borderColor = '', 1500);
+            return;
+        }
+        payload = { mode: 'query', query };
+    }
+
+    body.classList.add('empty');
+    grid.innerHTML = `
+        <div class="an-empty">
+            <div style="display:flex;gap:6px;align-items:center;color:#3b5bdb;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:20px;"></i>
+            </div>
+            <p style="color:#3b5bdb;font-weight:700;">Matching en cours…</p>
+            <small>${anOffreData ? "Analyse de l'offre structurée" : 'Analyse sémantique des CV'}</small>
+        </div>`;
+
+    try {
+        const res  = await fetch("{% url 'candidat:cv_math' %}", {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body   : JSON.stringify(payload),
+        });
+
+        const html = await res.text();
+
+        if (!anOffreData) {
+            document.getElementById('an-query').value = '';
+            anCharCount(document.getElementById('an-query'));
+        }
+
+        grid.innerHTML = html;
+
+        const nb = grid.querySelectorAll('.match-card').length;
+        if (nb > 0) {
+            body.classList.remove('empty');
+        } else {
+            body.classList.add('empty');
+        }
+
+        count.textContent    = nb ? `${nb} résultat${nb > 1 ? 's' : ''}` : '';
+        clearB.style.display = nb ? '' : 'none';
+
+    } catch (err) {
+        console.error(err);
+        body.classList.add('empty');
+        grid.innerHTML = `
+            <div class="an-empty">
+                <div class="an-empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <p>Erreur lors du matching</p>
+                <small>Réessayez dans un instant</small>
+            </div>`;
+    }
+}
+
+function anClearResults() {
+    const body = document.getElementById('an-results-body');
+    document.getElementById('an-results-grid').innerHTML = `
+        <div class="an-empty">
+            <div class="an-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <p>Aucun résultat</p>
+            <small>Décrivez un profil et lancez le matching</small>
+        </div>`;
+    body.classList.add('empty');
+    document.getElementById('an-results-count').textContent = '';
+    document.getElementById('an-clear-results').style.display = 'none';
+}
+
+let anThinking = null;
+
+function anTimeNow() {
+    return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function anAddMessage(text, sender) {
+    const welcome  = document.getElementById('an-chat-welcome');
+    const messages = document.getElementById('an-chat-messages');
+    if (welcome.style.display !== 'none') {
+        welcome.style.display  = 'none';
+        messages.style.display = 'flex';
+    }
+    const div = document.createElement('div');
+    div.className = `an-msg ${sender}`;
+
+    const content = sender === 'bot'
+        ? text
+        : text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    div.innerHTML = `<div class="an-msg-content">${content}</div>
+                     <div class="an-msg-time">${anTimeNow()}</div>`;
+    messages.appendChild(div);
+
+    setTimeout(() => {
+        const chatBody = document.getElementById('an-chat-body');
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }, 50);
+}
+
+function anShowThinking(show) {
+    const messages = document.getElementById('an-chat-messages');
+    if (show) {
+        if (anThinking) return;
+        const welcome = document.getElementById('an-chat-welcome');
+        if (welcome.style.display !== 'none') {
+            welcome.style.display  = 'none';
+            messages.style.display = 'flex';
+        }
+        anThinking = document.createElement('div');
+        anThinking.className = 'an-thinking';
+        anThinking.innerHTML = `<div class="an-thinking-dots">
+            <span></span><span></span><span></span></div>`;
+        messages.appendChild(anThinking);
+        setTimeout(() => {
+            document.getElementById('an-chat-body').scrollTop = 99999;
+        }, 50);
+    } else {
+        if (anThinking) { anThinking.remove(); anThinking = null; }
+    }
+}
+
+async function anSendChat(text) {
+    const input = document.getElementById('an-chat-input');
+    const query = text || input.value.trim();
+    if (!query) return;
+    input.value = '';
+    anAddMessage(query, 'user');
+
+    try {
+        anShowThinking(true);
+        const res  = await fetch("{% url 'candidat:chat_bot' %}", {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body   : JSON.stringify({ query, history: [] }),
+        });
+        const data = await res.json();
+        anShowThinking(false);
+        anAddMessage(
+            data.status === 'success' ? data.response : 'Une erreur est survenue.',
+            'bot'
+        );
+    } catch {
+        anShowThinking(false);
+        anAddMessage('Problème de connexion au serveur.', 'bot');
+    }
+}
+
+function anSendSuggestion(el) {
+    anSendChat(el.textContent.trim());
+}
+
+function anClearChat() {
+    const welcome  = document.getElementById('an-chat-welcome');
+    const messages = document.getElementById('an-chat-messages');
+    messages.innerHTML     = '';
+    welcome.style.display  = 'flex';
+    messages.style.display = 'none';
+}
+
+document.getElementById('an-chat-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') anSendChat();
+});
+
+async function GenerateRepport(btn) {
+    document.getElementById('loader').style.display = 'flex';
+    const id      = btn.dataset.identifiant;
+    const icon    = document.getElementById(`icon-gen-${id}`);
+    const btnGen  = document.getElementById(`btn-gen-${id}`);
+    const btnRep  = document.getElementById(`btn-report-${id}`);
+    const dot     = document.getElementById(`dot-${id}`);
+    const etatEl  = document.getElementById(`etat-${id}`);
+
+    icon.className  = 'fa-solid fa-arrows-rotate icon-spinning';
+    btnGen.disabled = true;
+    btnGen.style.opacity = '0.5';
+    btnGen.style.cursor  = 'not-allowed';
+
+    if (dot)    dot.className      = 'state-dot st-en_cours';
+    if (etatEl) etatEl.textContent = 'En cours…';
+
+    try {
+        const res  = await fetch("{% url 'candidat:gen_repport' %}", {
+            method : 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken' : '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ identifiant: id }),
+        });
+
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            icon.className            = 'fa-solid fa-check';
+            btnGen.style.background   = '#ecfdf5';
+            btnGen.style.borderColor  = '#6ee7b7';
+            btnGen.style.color        = '#10b981';
+            btnGen.style.opacity      = '1';
+            btnGen.style.cursor       = 'pointer';
+            btnGen.disabled           = false;
+
+            if (dot)    dot.className      = 'state-dot st-en_cours';
+            if (etatEl) etatEl.textContent = 'En cours';
+
+            if (btnRep) {
+                btnRep.classList.remove('btn-disabled');
+                btnRep.removeAttribute('disabled');
+                btnRep.setAttribute('onclick', 'VoirRapport(this)');
+                btnRep.title             = 'Voir rapport';
+                btnRep.style.background  = '#f3f0ff';
+                btnRep.style.borderColor = '#ddd6fe';
+                btnRep.style.color       = '#7c3aed';
+            }
+
+            setTimeout(() => {
+                icon.className           = 'fa-solid fa-arrows-rotate';
+                btnGen.style.background  = '';
+                btnGen.style.borderColor = '';
+                btnGen.style.color       = '';
+            }, 2000);
+
+        } else {
+            throw new Error(data.message || 'Erreur inconnue');
+        }
+
+    } catch (err) {
+        console.error('GenerateRepport error:', err);
+
+        icon.className            = 'fa-solid fa-triangle-exclamation';
+        btnGen.style.background   = '#fff0f3';
+        btnGen.style.borderColor  = '#fda4af';
+        btnGen.style.color        = '#f43f5e';
+        btnGen.style.opacity      = '1';
+        btnGen.style.cursor       = 'pointer';
+        btnGen.disabled           = false;
+
+        if (dot)    dot.className      = 'state-dot st-en_attente';
+        if (etatEl) etatEl.textContent = 'Erreur';
+
+        setTimeout(() => {
+            icon.className           = 'fa-solid fa-arrows-rotate';
+            btnGen.style.background  = '';
+            btnGen.style.borderColor = '';
+            btnGen.style.color       = '';
+        }, 3000);
+
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+    }
+}
+
+function openforme()  { document.getElementById('modal-form').style.display = 'flex'; }
+function closeforme() { document.getElementById('modal-form').style.display = 'none'; }
+</script>
+
+{% endblock %}

@@ -1,0 +1,80 @@
+<!-- ══════════════════════════════════════
+     LOADER GLOBAL (Responsive)
+══════════════════════════════════════ -->
+{% load static %}
+<style>
+    #loader_user {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(10, 15, 30, 0.65); /* Un peu plus foncé pour mieux ressortir */
+        backdrop-filter: blur(5px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999; /* Au dessus de tout, même la modal CV */
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    #loader_user_anim {
+        width: 200px;
+        height: 200px;
+        max-width: 80vw; /* Ne dépasse jamais 80% de la largeur de l'écran */
+        max-height: 80vw;
+    }
+    
+    .loader-text {
+        color: #fff;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        opacity: 0.9;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+</style>
+
+<div id="loader_user">
+    <div id="loader_user_anim"></div>
+    <div class="loader-text">Chargement...</div>
+</div>
+
+<script>
+    // Initialisation Lottie sécurisée
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lottie !== 'undefined') {
+            var animation = lottie.loadAnimation({
+                container: document.getElementById('loader_user_anim'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: "{% static 'animations/loading.json' %}"
+            });
+        }
+    });
+
+    // Masquer au chargement complet de la page
+    window.addEventListener("load", function () {
+        const loader = document.getElementById("loader_user");
+        if(loader) loader.style.display = "none";
+    });
+
+    // Fonctions utilitaires
+    function showLoaderUser() {
+        const loader = document.getElementById("loader_user");
+        if(loader) loader.style.display = "flex";
+    }
+
+    function hideLoaderUser() {
+        const loader = document.getElementById("loader_user");
+        if(loader) loader.style.display = "none";
+    }
+</script>

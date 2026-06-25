@@ -1,0 +1,97 @@
+{% load static %}
+<aside id="aside-left">
+
+    <div class="sidebar-brand">
+        <img src="{% static 'imgs/symbole.png' %}" alt="DeliorAI">
+        <h1>Delior<span>AI</span></h1>
+    </div>
+
+    <div class="sidebar-label">Navigation</div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'dashboard' %}">
+        <div class="option {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-grip"></i>
+            <p>Dashboard</p>
+        </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-label">Outils</div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'analyse' %}">
+        <div
+            class="option {% if request.resolver_match.url_name == 'analyse' or request.resolver_match.url_name == 'cv_math' %}active{% endif %}">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <p>Analyse</p>
+        </div>
+    </div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'repport' %}">
+        <div class="option {% if request.resolver_match.url_name == 'repport' %}active{% endif %}">
+            <i class="fa-solid fa-file-lines"></i>
+            <p>Rapports</p>
+        </div>
+    </div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'document' %}">
+        <div class="option {% if request.resolver_match.url_name == 'document' %}active{% endif %}">
+            <i class="fa-solid fa-file-pdf"></i>
+            <p>Document CV</p>
+        </div>
+    </div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'agents' %}">
+        <div class="option {% if request.resolver_match.url_name == 'agents' %}active{% endif %}">
+            <i class="fa-solid fa-user-group"></i>
+            <p>Agents Delior</p>
+        </div>
+    </div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'message' %}">
+        <div class="option {% if request.resolver_match.url_name == 'message' %}active{% endif %}">
+            <i class="fa-solid fa-bell"></i>
+            <p>Message</p>
+            {% if notifications and notifications_count > 0 %}
+            <span class="nav-badge">{{ notifications_count }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-label">Compte</div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'mes_traitements' %}">
+        <div class="option {% if request.resolver_match.url_name == 'mes_traitements' %}active{% endif %}">
+            <i class="fa-solid fa-diagram-project"></i>
+            <p>Mes traitements</p>
+        </div>
+    </div>
+
+    <div class="bloc-option" data-url="{% url 'compte' %}" onclick="goToView(this)">
+        <div class="option {% if request.resolver_match.url_name == 'compte' %}active{% endif %}">
+            <i class="fa-solid fa-user"></i>
+            <p>Compte</p>
+        </div>
+    </div>
+
+    <div class="bloc-option" onclick="goToView(this)" data-url="{% url 'settings' %}">
+        <div class="option {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+            <i class="fa-solid fa-gear"></i>
+            <p>Paramètres</p>
+        </div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="bloc-option" data-url="{% url 'utilisateur:logout' %}" onclick="goToView(this)">
+        <div class="option" style="color: rgba(249,60,101,0.7);">
+            <i class="fa-solid fa-right-from-bracket" style="color: #f93c65;"></i>
+            <p>Déconnexion</p>
+        </div>
+    </div>
+
+</aside>

@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Compte{% endblock %}
+
+{% block content_main %}
+<style>
+    .compte-page {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-bottom: 40px;
+    }
+
+    .cp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .cp-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 22px; font-weight: 800;
+        color: #0d1117; letter-spacing: -0.5px;
+        line-height: 1.2; margin: 0; padding: 0;
+        border: none; background: none;
+    }
+
+    .cp-subtitle {
+        font-size: 13px;
+        color: #7a8499;
+        margin-top: 2px;
+    }
+
+    /* Grille Responsive : 2 colonnes par défaut */
+    .compte-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .compte-card {
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: fadeUp .35s ease both;
+        transition: box-shadow .2s, transform .2s;
+        width: 100%; /* S'assure que la carte prend la largeur de sa cellule */
+    }
+
+    .compte-card:nth-child(1){ animation-delay:.04s }
+    .compte-card:nth-child(2){ animation-delay:.08s }
+    .compte-card:nth-child(3){ animation-delay:.12s }
+
+    .compte-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,.09);
+        transform: translateY(-2px);
+    }
+
+    @keyframes fadeUp {
+        from { opacity:0; transform:translateY(10px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+
+    .cp-band {
+        height: 4px;
+        width: 100%;
+        flex-shrink: 0;
+    }
+
+    .band-blue   { background: linear-gradient(90deg,#4f7cff,#3b5bdb); }
+    .band-gold   { background: linear-gradient(90deg,#e1b66e,#d6a764); }
+    .band-red    { background: linear-gradient(90deg,#fb7185,#f43f5e); }
+
+    .card-head {
+        background: #0a0f1e;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .card-head::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 10% 50%, rgba(59,91,219,.2) 0%, transparent 65%),
+                    radial-gradient(ellipse at 90% 50%, rgba(139,92,246,.12) 0%, transparent 65%);
+        pointer-events: none;
+    }
+
+    .card-icon {
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px;
+        flex-shrink: 0;
+        position: relative; z-index: 1;
+        border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .ic-blue   { background: rgba(79,124,255,.2);  color: #7ca7ff; }
+    .ic-gold   { background: rgba(214,167,100,.2); color: #e1b66e; }
+    .ic-red    { background: rgba(244,63,94,.2);   color: #fb7185; }
+
+    .card-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.2px;
+        position: relative; z-index: 1;
+    }
+
+    .card-body {
+        padding: 18px 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .fm-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .fm-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .fm-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #374151;
+        letter-spacing: 0.2px;
+    }
+
+    .fm-input {
+        width: 100%;
+        height: 36px;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 9px;
+        padding: 0 12px;
+        font-size: 13px;
+        font-family: inherit;
+        color: #0d1117;
+        background: #f8fafd;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+
+    .fm-input:focus {
+        border-color: #3b5bdb;
+        box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+        background: #fff;
+    }
+
+    .card-footer {
+        padding: 12px 20px;
+        border-top: 1.5px solid #e4e9f2;
+        display: flex;
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+
+    .btn-save {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 20px;
+        border-radius: 9px;
+        border: none;
+        background: #3b5bdb;
+        color: #fff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .15s, transform .1s;
+    }
+
+    .btn-save:hover  { background: #2f4ac0; }
+    .btn-save:active { transform: scale(0.97); }
+
+    .avatar-card-body {
+        padding: 24px 20px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex: 1;
+    }
+
+    .avatar-ring {
+        width: 88px; height: 88px;
+        border-radius: 50%;
+        border: 3px solid #e4e9f2;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: #f1f5f9;
+        display: flex; align-items: center; justify-content: center;
+        position: relative;
+        cursor: pointer;
+        transition: border-color .2s;
+    }
+
+    .avatar-ring:hover { border-color: #3b5bdb; }
+
+    .avatar-ring img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-ring i { font-size: 28px; color: #c0c8d8; }
+
+    .avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(10,15,30,.45);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0;
+        transition: opacity .2s;
+        border-radius: 50%;
+    }
+
+    .avatar-overlay i { color: #fff; font-size: 16px; }
+    .avatar-ring:hover .avatar-overlay { opacity: 1; }
+
+    .avatar-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .avatar-name {
+        font-family: 'Syne', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        color: #0d1117;
+    }
+
+    .avatar-post { font-size: 12px; color: #7a8499; }
+
+    .btn-change-photo {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 10px;
+        padding: 7px 14px;
+        border-radius: 9px;
+        border: 1.5px solid #e4e9f2;
+        background: #f8fafd;
+        color: #374151;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background .15s, border-color .15s, color .15s;
+        align-self: flex-start;
+    }
+
+    .btn-change-photo:hover {
+        background: #eef2ff;
+        border-color: #c5d0f7;
+        color: #3b5bdb;
+    }
+
+    .pwd-hints {
+        background: #f8fafd;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 10px;
+        padding: 10px 14px;
+    }
+
+    .pwd-hints-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .pwd-hints ul {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .pwd-hints li {
+        font-size: 11px;
+        color: #7a8499;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .pwd-hints li::before {
+        content: '';
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: #c5d0f7;
+        flex-shrink: 0;
+    }
+
+    /* ══ RESPONSIVE MEDIA QUERIES ══ */
+    
+    /* Tablettes et écrans moyens : Passage à 1 colonne pour la grille principale */
+    @media (max-width: 1024px) {
+        .compte-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        /* On peut garder les cartes côte à côte si on veut, mais ici on empile pour la clarté */
+        /* Si vous préférez garder 2 cartes côte à côte sur tablette, supprimez le bloc ci-dessus */
+    }
+
+    /* Mobiles et petits écrans : Ajustements internes */
+    @media (max-width: 768px) {
+        .cp-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .compte-grid {
+            grid-template-columns: 1fr; /* Force 1 colonne sur mobile */
+            gap: 20px;
+        }
+
+        .fm-grid {
+            grid-template-columns: 1fr; /* Champs empilés dans les formulaires */
+        }
+
+        .avatar-card-body {
+            flex-direction: column;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .avatar-info {
+            align-items: center;
+        }
+
+        .btn-change-photo {
+            margin-top: 5px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .card-footer {
+            justify-content: center;
+        }
+        
+        .btn-save {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+{% with request.user as user %}
+<div class="compte-page">
+
+    <!-- ── Header ── -->
+    <div class="cp-header">
+        <div>
+            <div class="cp-title">Mon Compte</div>
+            <div class="cp-subtitle">Gérez vos informations personnelles et votre sécurité</div>
+        </div>
+    </div>
+
+    <div class="compte-grid">
+
+        <!-- ── Infos générales ── -->
+        <form action="{% url 'utilisateur:updateinfosuser' %}" method="POST">
+            {% csrf_token %}
+            <div class="compte-card">
+                <div class="cp-band band-blue"></div>
+                <div class="card-head">
+                    <div class="card-icon ic-blue"><i class="fa-solid fa-user"></i></div>
+                    <div class="card-title">Informations générales</div>
+                </div>
+                <div class="card-body">
+                    <div class="fm-grid">
+                        <div class="fm-group">
+                            <label class="fm-label">Nom</label>
+                            <input class="fm-input" type="text" value="{{ user.last_name }}" name="last_name" required>
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label">Prénom</label>
+                            <input class="fm-input" type="text" value="{{ user.first_name }}" name="first_name" required>
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label">Email</label>
+                            <input class="fm-input" type="email" value="{{ user.email }}" name="email" required>
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label">Poste</label>
+                            <input class="fm-input" type="text" value="{{ user.post }}" name="post" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" type="submit">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Sauvegarder
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- ── Avatar ── -->
+        <form action="{% url 'utilisateur:setprofile' %}" method="POST" enctype="multipart/form-data" id="avatar-form">
+            {% csrf_token %}
+            <div class="compte-card">
+                <div class="cp-band band-gold"></div>
+                <div class="card-head">
+                    <div class="card-icon ic-gold"><i class="fa-solid fa-image"></i></div>
+                    <div class="card-title">Photo de profil</div>
+                </div>
+                <div class="avatar-card-body">
+                    <div class="avatar-ring" onclick="document.getElementById('imageInput').click()">
+                        {% if user.image %}
+                        <img src="{{ user.image.url }}" alt="avatar">
+                        {% else %}
+                        <i class="fa-solid fa-user"></i>
+                        {% endif %}
+                        <div class="avatar-overlay">
+                            <i class="fa-solid fa-camera"></i>
+                        </div>
+                    </div>
+                    <div class="avatar-info">
+                        <div class="avatar-name">{{ user.last_name }} {{ user.first_name }}</div>
+                        <div class="avatar-post">{{ user.post }}</div>
+                        <input type="file" name="image" id="imageInput" hidden accept="image/*">
+                        <button type="button" class="btn-change-photo"
+                                onclick="document.getElementById('imageInput').click()">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                            Changer la photo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- ── Mot de passe ── -->
+        <form action="{% url 'utilisateur:setpassword' %}" method="POST">
+            {% csrf_token %}
+            <div class="compte-card">
+                <div class="cp-band band-red"></div>
+                <div class="card-head">
+                    <div class="card-icon ic-red"><i class="fa-solid fa-lock"></i></div>
+                    <div class="card-title">Mot de passe</div>
+                </div>
+                <div class="card-body">
+                    <div class="fm-grid">
+                        <div class="fm-group">
+                            <label class="fm-label">Mot de passe actuel</label>
+                            <input class="fm-input" type="password" name="current_pswd"
+                                   required minlength="8" maxlength="8">
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label">Nouveau mot de passe</label>
+                            <input class="fm-input" type="password" name="new_pswd"
+                                   required minlength="8" maxlength="8">
+                        </div>
+                    </div>
+                    <div class="pwd-hints">
+                        <div class="pwd-hints-title">Exigences du mot de passe</div>
+                        <ul>
+                            <li>8 caractères exactement</li>
+                            <li>Au moins une lettre minuscule</li>
+                            <li>Au moins une lettre majuscule</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-save" type="submit">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Sauvegarder
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endwith %}
+
+<script>
+    document.getElementById('imageInput').addEventListener('change', function () {
+        if (this.files.length > 0) {
+            // Optionnel : Ajouter une confirmation ou un loader avant soumission auto
+            document.getElementById('avatar-form').submit();
+        }
+    });
+</script>
+
+{% endblock %}

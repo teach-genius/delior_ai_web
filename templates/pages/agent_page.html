@@ -1,0 +1,1081 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Agents{% endblock %}
+
+{% block content_main %}
+
+<style>
+    .ag-page {
+        --ag-accent: #3b5bdb;
+        --ag-accent-light: #eef2ff;
+        --ag-accent-mid: #c5d0f7;
+        --ag-border: #e4e9f2;
+        --ag-border-2: #d0d8ea;
+        --ag-text-1: #0d1117;
+        --ag-text-2: #4a5568;
+        --ag-text-3: #8a94a6;
+        --ag-surface: #ffffff;
+        --ag-bg: #f8fafd;
+        --ag-radius: 16px;
+        --ag-radius-sm: 10px;
+        --ag-shadow-sm: 0 1px 3px rgba(0, 0, 0, .06);
+        --ag-shadow-lg: 0 12px 40px rgba(0, 0, 0, .12), 0 4px 8px rgba(0, 0, 0, .06);
+        --ag-danger: #f43f5e;
+        --ag-green: #10b981;
+    }
+
+    .ag-page {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-bottom: 40px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* ══ HEADER ══ */
+    .ag-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .ag-title-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ag-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+        color: #0d1117;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+        margin: 0;
+    }
+
+    .ag-count {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ag-accent);
+        background: var(--ag-accent-light);
+        border: 1px solid var(--ag-accent-mid);
+        border-radius: 20px;
+        padding: 3px 11px;
+        white-space: nowrap;
+    }
+
+    /* ══ TOOLBAR ══ */
+    .ag-toolbar {
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 16px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .ag-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 30px;
+        padding: 0 14px;
+        height: 36px;
+        /* Largeur flexible mais avec un minimum confortable */
+        min-width: 200px; 
+        flex: 1 1 240px; /* Grandit et rétrécit, base 240px */
+        max-width: 400px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .ag-search:focus-within {
+        border-color: var(--ag-accent);
+        box-shadow: 0 0 0 3px rgba(59, 91, 219, .1);
+    }
+
+    .ag-search i {
+        color: #8a94a6;
+        font-size: 12px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .ag-search input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 13px;
+        color: #0d1117;
+        width: 100%;
+        font-family: inherit;
+    }
+
+    .ag-filter {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 30px;
+        padding: 0 14px;
+        height: 36px;
+        transition: border-color .2s;
+        white-space: nowrap;
+    }
+
+    .ag-filter i {
+        color: #8a94a6;
+        font-size: 11px;
+    }
+
+    .ag-filter label {
+        font-size: 12px;
+        color: #4a5568;
+        white-space: nowrap;
+    }
+
+    .ag-filter select {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 12px;
+        color: #0d1117;
+        font-family: inherit;
+        cursor: pointer;
+        padding-right: 4px;
+    }
+
+    .ag-toolbar-sep {
+        width: 1px;
+        height: 22px;
+        background: #e4e9f2;
+        margin: 0 4px;
+        flex-shrink: 0;
+    }
+
+    .ag-toolbar-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    /* ══ BOUTONS ══ */
+    .ag-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 16px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all .15s;
+        text-decoration: none;
+        white-space: nowrap;
+        border: none;
+    }
+
+    .ag-btn:active { transform: scale(0.97); }
+
+    .ag-btn-primary {
+        background: #d6a764;
+        color: #fff;
+    }
+
+    .ag-btn-primary:hover {
+        background: #c4924d;
+        box-shadow: 0 4px 14px rgba(214, 167, 100, .4);
+        transform: translateY(-1px);
+    }
+
+    .ag-btn-ghost {
+        background: #f8fafd;
+        color: #4a5568;
+        border: 1.5px solid #e4e9f2;
+    }
+
+    .ag-btn-ghost:hover {
+        background: #eef2ff;
+        border-color: #c5d0f7;
+        color: var(--ag-accent);
+    }
+
+    /* ══ TABLEAU ══ */
+    .ag-panel {
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Conteneur scrollable pour les très petits écrans */
+    .ag-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .ag-table-head {
+        display: grid;
+        /* Colonnes responsives : Photo fixe, autres flexibles avec min-width */
+        grid-template-columns: 50px minmax(150px, 1.5fr) minmax(100px, 1fr) minmax(180px, 1.5fr) minmax(120px, 1fr) 100px 100px;
+        gap: 8px;
+        padding: 11px 20px;
+        background: #f8fafd;
+        border-bottom: 1.5px solid #e4e9f2;
+        font-size: 9.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: #8a94a6;
+        min-width: 700px; /* Force le scroll si trop petit */
+    }
+
+    .ag-th {
+        display: flex;
+        align-items: center;
+    }
+
+    .ag-th.center { justify-content: center; }
+
+    .ag-table-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ag-row {
+        display: grid;
+        grid-template-columns: 50px minmax(150px, 1.5fr) minmax(100px, 1fr) minmax(180px, 1.5fr) minmax(120px, 1fr) 100px 100px;
+        gap: 8px;
+        padding: 11px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        align-items: center;
+        cursor: pointer;
+        transition: background .12s;
+        animation: ag-fadeIn .25s ease both;
+        min-width: 700px; /* Synchronisé avec le header */
+    }
+
+    .ag-row:last-child { border-bottom: none; }
+    .ag-row:hover { background: #f8fafd; }
+
+    @keyframes ag-fadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ag-cell {
+        display: flex;
+        align-items: center;
+        font-size: 12.5px;
+        color: #374151;
+        min-width: 0; /* Important pour text-overflow */
+    }
+
+    .ag-cell.center { justify-content: center; }
+    .ag-cell p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+    .ag-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: #f0f3fa;
+        border: 1.5px solid #e4e9f2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ag-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .ag-avatar i { font-size: 13px; color: #c0c8d8; }
+
+    .ag-identity {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+    }
+
+    .ag-identity-name {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #0d1117;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ag-identity-email {
+        font-size: 10.5px;
+        color: #8a94a6;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ag-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 10.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: 1px solid;
+    }
+
+    .ag-badge i { font-size: 7px; }
+    .ag-badge.actif { background: #ecfdf5; border-color: #a7f3d0; color: #059669; }
+    .ag-badge.inactif { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+    .ag-badge.online { background: #ecfdf5; border-color: #a7f3d0; color: #059669; }
+    .ag-badge.offline { background: #fffbeb; border-color: #fcd34d; color: #b45309; }
+
+    /* ══ PAGINATION ══ */
+    .ag-pag {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 20px;
+        border-top: 1.5px solid #e4e9f2;
+        background: #f8fafd;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ag-pag-count {
+        font-size: 11.5px;
+        color: #8a94a6;
+        font-weight: 500;
+    }
+
+    .ag-pag-count strong { color: #0d1117; }
+
+    .ag-pag-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .ag-pag-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1.5px solid #e4e9f2;
+        background: #fff;
+        color: #4a5568;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+    .ag-pag-btn:hover {
+        background: #eef2ff;
+        color: var(--ag-accent);
+        border-color: #c5d0f7;
+    }
+
+    .ag-pag-btn.disabled { opacity: .35; pointer-events: none; }
+    .ag-pag-info { padding: 0 12px; font-size: 11.5px; color: #4a5568; font-weight: 600; }
+
+    /* ══ MODALS ══ */
+    .ag-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(13, 17, 23, .45);
+        backdrop-filter: blur(6px);
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease;
+        padding: 20px;
+    }
+
+    .ag-modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .ag-modal {
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, .14);
+        width: 100%;
+        max-width: 520px;
+        overflow: hidden;
+        transform: translateY(18px) scale(.97);
+        transition: transform .22s ease;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ag-modal-backdrop.open .ag-modal { transform: translateY(0) scale(1); }
+
+    .ag-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 22px;
+        background: #0a0f1e;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .ag-modal-head::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; width: 100%; height: 2px;
+        background: linear-gradient(90deg, #3b5bdb, #818cf8, #f472b6);
+    }
+
+    .ag-modal-head-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    .ag-modal-close {
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, .12);
+        background: rgba(255, 255, 255, .06);
+        color: #94a3b8;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .15s, color .15s;
+    }
+
+    .ag-modal-close:hover { background: rgba(244, 63, 94, .2); color: #f43f5e; }
+
+    .ag-modal-body {
+        padding: 24px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+    }
+
+    .ag-modal-profile { display: flex; align-items: center; gap: 18px; }
+
+    .ag-modal-avatar {
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        border: 2.5px solid #e4e9f2;
+        overflow: hidden;
+        background: #f0f3fa;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ag-modal-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .ag-modal-avatar i { font-size: 26px; color: #c0c8d8; }
+
+    .ag-modal-profile-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .ag-modal-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: #0d1117; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ag-modal-poste { font-size: 12px; color: #8a94a6; }
+
+    .ag-modal-fields {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .ag-modal-field { display: flex; flex-direction: column; gap: 5px; }
+    .ag-modal-field label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a94a6; }
+    .ag-modal-field input {
+        height: 36px;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 10px;
+        padding: 0 12px;
+        font-size: 12.5px;
+        font-family: inherit;
+        color: #0d1117;
+        background: #f8fafd;
+        outline: none;
+        width: 100%;
+    }
+
+    .ag-modal-status-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: #f8fafd;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 12px;
+    }
+
+    .ag-modal-status-label { font-size: 11.5px; font-weight: 600; color: #4a5568; }
+
+    .ag-btn-approve {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 18px;
+        border-radius: 10px;
+        background: #ecfdf5;
+        border: 1.5px solid #6ee7b7;
+        border-left: 4px solid #10b981;
+        color: #059669;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background .15s;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ag-btn-approve:hover { background: #d1fae5; }
+
+    /* ══ CREATE MODAL ══ */
+    .ag-create-modal {
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, .14);
+        width: 100%;
+        max-width: 560px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(18px) scale(.97);
+        transition: transform .22s ease;
+    }
+
+    .ag-modal-backdrop.open .ag-create-modal { transform: translateY(0) scale(1); }
+
+    .ag-create-body {
+        padding: 24px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .ag-avatar-upload {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        background: #f8fafd;
+        border: 1.5px dashed #d0d8ea;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: border-color .2s, background .2s;
+    }
+
+    .ag-avatar-upload:hover { border-color: #3b5bdb; background: #eef2ff; }
+
+    .ag-avatar-preview {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        border: 2px solid #e4e9f2;
+        overflow: hidden;
+        background: #ffffff;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: #c0c8d8;
+    }
+
+    .ag-avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .ag-avatar-upload-text { flex: 1; }
+    .ag-avatar-upload-title { font-size: 12.5px; font-weight: 600; color: #0d1117; }
+    .ag-avatar-upload-sub { font-size: 11px; color: #8a94a6; margin-top: 2px; }
+
+    .ag-create-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .ag-create-field { display: flex; flex-direction: column; gap: 5px; }
+    .ag-create-field.full { grid-column: 1 / -1; }
+    .ag-create-field label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a94a6; }
+    
+    .ag-create-field input, .ag-create-field select {
+        height: 38px;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 10px;
+        padding: 0 12px;
+        font-size: 13px;
+        font-family: inherit;
+        color: #0d1117;
+        background: #ffffff;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        width: 100%;
+    }
+
+    .ag-create-field input:focus, .ag-create-field select:focus {
+        border-color: #3b5bdb;
+        box-shadow: 0 0 0 3px rgba(59, 91, 219, .08);
+    }
+
+    .ag-create-field input.error { border-color: #f43f5e; }
+    .ag-field-hint { font-size: 10.5px; color: #8a94a6; }
+
+    .ag-pwd-wrap { position: relative; }
+    .ag-pwd-wrap input { padding-right: 38px; }
+    
+    .ag-pwd-toggle {
+        position: absolute;
+        right: 11px; top: 50%;
+        transform: translateY(-50%);
+        color: #8a94a6;
+        cursor: pointer;
+        font-size: 13px;
+        transition: color .15s;
+    }
+    .ag-pwd-toggle:hover { color: #3b5bdb; }
+
+    .ag-create-feedback {
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        display: none;
+    }
+
+    .ag-create-feedback.success {
+        background: #ecfdf5;
+        border: 1.5px solid #6ee7b7;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ag-create-feedback.error {
+        background: #fff0f3;
+        border: 1.5px solid #fda4af;
+        color: #e11d48;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ag-create-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        padding: 16px 22px;
+        border-top: 1.5px solid #e4e9f2;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    /* ══ RESPONSIVE FIXES ══ */
+    @media (max-width: 1024px) {
+        .ag-search { flex: 1 1 100%; max-width: none; order: 3; }
+        .ag-toolbar { justify-content: flex-start; }
+        .ag-toolbar-right { margin-left: 0; width: 100%; justify-content: flex-end; order: 4; margin-top: 5px; }
+        .ag-toolbar-sep { display: none; }
+    }
+
+    @media (max-width: 768px) {
+        .ag-create-fields { grid-template-columns: 1fr; }
+        .ag-modal-fields { grid-template-columns: 1fr; }
+        .ag-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .ag-title { font-size: 20px; }
+    }
+</style>
+
+<div class="ag-page">
+
+    <div class="ag-header">
+        <div class="ag-title-group">
+            <h1 class="ag-title">Agents</h1>
+            <span class="ag-count">{{ page_obj.paginator.count }} agent{{ page_obj.paginator.count|pluralize }}</span>
+        </div>
+    </div>
+
+    <div class="ag-toolbar">
+        <div class="ag-search" id="ag-search-box">
+            <i class="fa-solid fa-magnifying-glass" id="ag-search-icon"></i>
+            <input type="text" id="ag-search-input" placeholder="Rechercher par email…" value="{{ f_email }}" maxlength="80">
+        </div>
+
+        <div class="ag-filter">
+            <i class="fa-solid fa-sliders"></i>
+            <label for="ag-status-select">Statut :</label>
+            <select id="ag-status-select">
+                <option value="" {% if not f_status %}selected{% endif %}>Tous</option>
+                <option value="actif" {% if f_status == 'actif' %}selected{% endif %}>Actif</option>
+                <option value="inactif" {% if f_status == 'inactif' %}selected{% endif %}>Inactif</option>
+            </select>
+        </div>
+
+        <div class="ag-toolbar-sep"></div>
+
+        <div class="ag-toolbar-right">
+            <button class="ag-btn ag-btn-ghost">
+                <i class="fa-solid fa-file-export"></i> Export
+            </button>
+            <button class="ag-btn ag-btn-primary" onclick="agOpenCreate()">
+                <i class="fa-solid fa-plus"></i> Nouvel agent
+            </button>
+        </div>
+    </div>
+
+    <div class="ag-panel">
+        <div class="ag-table-wrapper">
+            <div class="ag-table-head">
+                <div class="ag-th center">Photo</div>
+                <div class="ag-th">Nom complet</div>
+                <div class="ag-th">Poste</div>
+                <div class="ag-th">Email</div>
+                <div class="ag-th">Dernière connexion</div>
+                <div class="ag-th center">Statut</div>
+                <div class="ag-th center">Connexion</div>
+            </div>
+
+            <div class="ag-table-body" id="ag-table-body">
+                {% for user in page_obj %}
+                <div class="ag-row" data-identifiant="{{ user.identifiant }}" data-imgdefault="{% static 'imgs/symbole.png' %}" onclick="agViewProfile(this)">
+                    <div class="ag-cell center">
+                        <div class="ag-avatar">
+                            {% if user.image %}
+                            <img src="{{ user.image.url }}" alt="">
+                            {% else %}
+                            <img src="{% static 'imgs/symbole.png' %}" alt="" style="object-fit:contain;">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ag-cell">
+                        <div class="ag-identity">
+                            <div class="ag-identity-name">{{ user.last_name }} {{ user.first_name }}</div>
+                            <div class="ag-identity-email">{{ user.email }}</div>
+                        </div>
+                    </div>
+                    <div class="ag-cell"><p>{{ user.post }}</p></div>
+                    <div class="ag-cell"><p>{{ user.email }}</p></div>
+                    <div class="ag-cell">
+                        <p style="font-size:11px;color:#8a94a6;">
+                            {% if user.last_login %}{{ user.last_login|timesince }}{% else %}Jamais{% endif %}
+                        </p>
+                    </div>
+                    <div class="ag-cell center">
+                        <span class="ag-badge {% if user.is_active %}actif{% else %}inactif{% endif %}">
+                            <i class="fa-solid fa-circle-dot"></i>
+                            {% if user.is_active %}Actif{% else %}Inactif{% endif %}
+                        </span>
+                    </div>
+                    <div class="ag-cell center">
+                        <span class="ag-badge {% if user.is_online %}online{% else %}offline{% endif %}">
+                            <i class="fa-solid fa-circle-dot"></i>
+                            {% if user.is_online %}En ligne{% else %}Hors ligne{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="ag-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 20px;color:#8a94a6;">
+                    <div style="width:56px;height:56px;border-radius:14px;background:#f4f6fb;border:2px dashed #d0d8ea;display:flex;align-items:center;justify-content:center;font-size:20px;color:#c0c8d8;"><i class="fa-solid fa-users-slash"></i></div>
+                    <p style="font-size:13px;font-weight:600;color:#4a5568;margin:0;">Aucun agent trouvé</p>
+                    <small style="font-size:11px;">Modifiez les filtres ou créez un nouvel agent.</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="ag-pag">
+            <div class="ag-pag-count">Total : <strong>{{ page_obj.paginator.count }}</strong> agent{{ page_obj.paginator.count|pluralize }}</div>
+            <div class="ag-pag-controls">
+                <div class="ag-pag-btn {% if not page_obj.has_previous %}disabled{% endif %}" {% if page_obj.has_previous %}onclick="agGoTo('?page={{ page_obj.previous_page_number }}{% if f_email %}&email={{ f_email }}{% endif %}{% if f_status %}&status={{ f_status }}{% endif %}')" {% endif %}>
+                    <i class="fa-solid fa-angle-left"></i>
+                </div>
+                <div class="ag-pag-info">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</div>
+                <div class="ag-pag-btn {% if not page_obj.has_next %}disabled{% endif %}" {% if page_obj.has_next %}onclick="agGoTo('?page={{ page_obj.next_page_number }}{% if f_email %}&email={{ f_email }}{% endif %}{% if f_status %}&status={{ f_status }}{% endif %}')" {% endif %}>
+                    <i class="fa-solid fa-angle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PROFIL -->
+<div class="ag-modal-backdrop" id="ag-profile-backdrop" onclick="if(event.target===this)agCloseProfile()">
+    <div class="ag-modal">
+        <div class="ag-modal-head">
+            <div class="ag-modal-head-title">Profil Agent</div>
+            <button class="ag-modal-close" onclick="agCloseProfile()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="ag-modal-body">
+            <div class="ag-modal-profile">
+                <div class="ag-modal-avatar">
+                    <img id="ag-profile-img" src="" alt="">
+                </div>
+                <div class="ag-modal-profile-info">
+                    <div class="ag-modal-name" id="ag-profile-name">—</div>
+                    <div class="ag-modal-poste" id="ag-profile-poste">—</div>
+                </div>
+            </div>
+            <div class="ag-modal-fields">
+                <div class="ag-modal-field">
+                    <label>Nom</label>
+                    <input type="text" id="ag-f-nom" readonly>
+                </div>
+                <div class="ag-modal-field">
+                    <label>Prénom</label>
+                    <input type="text" id="ag-f-prenom" readonly>
+                </div>
+                <div class="ag-modal-field">
+                    <label>Email</label>
+                    <input type="text" id="ag-f-email" readonly>
+                </div>
+                <div class="ag-modal-field">
+                    <label>Poste</label>
+                    <input type="text" id="ag-f-poste" readonly>
+                </div>
+            </div>
+            <div class="ag-modal-status-row">
+                <span class="ag-modal-status-label">Statut :</span>
+                <span class="ag-badge" id="ag-profile-status"></span>
+            </div>
+            <div id="ag-approb-block" style="display:none;">
+                <button class="ag-btn-approve" onclick="agApprob()">
+                    <i class="fa-solid fa-circle-check"></i> Approuver la demande
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CREATION -->
+<div class="ag-modal-backdrop" id="ag-create-backdrop" onclick="if(event.target===this)agCloseCreate()">
+    <div class="ag-create-modal">
+        <div class="ag-modal-head">
+            <div class="ag-modal-head-title">Nouvel Agent</div>
+            <button class="ag-modal-close" onclick="agCloseCreate()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="ag-create-body">
+            <div class="ag-avatar-upload" onclick="document.getElementById('ag-img-input').click()">
+                <div class="ag-avatar-preview" id="ag-avatar-preview">
+                    <img id="ag-avatar-preview-img" src="" alt="">
+                    <i class="fa-solid fa-user" id="ag-avatar-icon"></i>
+                </div>
+                <div class="ag-avatar-upload-text">
+                    <div class="ag-avatar-upload-title">Photo de profil</div>
+                    <div class="ag-avatar-upload-sub">Cliquez pour ajouter · JPG, PNG</div>
+                </div>
+                <input type="file" id="ag-img-input" accept="image/*" style="display:none" onchange="agPreviewAvatar(this)">
+            </div>
+            <div class="ag-create-fields">
+                <div class="ag-create-field">
+                    <label>Nom <span style="color:#f43f5e">*</span></label>
+                    <input type="text" id="ag-c-nom" placeholder="Dupont" maxlength="60">
+                </div>
+                <div class="ag-create-field">
+                    <label>Prénom <span style="color:#f43f5e">*</span></label>
+                    <input type="text" id="ag-c-prenom" placeholder="Marie" maxlength="60">
+                </div>
+                <div class="ag-create-field full">
+                    <label>Email <span style="color:#f43f5e">*</span></label>
+                    <input type="email" id="ag-c-email" placeholder="marie@exemple.com" maxlength="150">
+                </div>
+                <div class="ag-create-field full">
+                    <label>Poste <span style="color:#f43f5e">*</span></label>
+                    <input type="text" id="ag-c-poste" placeholder="Ex: Chargé de recrutement" maxlength="100">
+                </div>
+                <div class="ag-create-field full">
+                    <label>Mot de passe <span style="color:#f43f5e">*</span></label>
+                    <div class="ag-pwd-wrap">
+                        <input type="password" id="ag-c-password" placeholder="Min. 8 caractères" maxlength="128">
+                        <i class="fa-solid fa-eye ag-pwd-toggle" id="ag-pwd-toggle" onclick="agTogglePwd()"></i>
+                    </div>
+                    <span class="ag-field-hint">8 caractères minimum</span>
+                </div>
+            </div>
+            <div class="ag-create-feedback" id="ag-create-feedback"></div>
+        </div>
+        <div class="ag-create-footer">
+            <button class="ag-btn ag-btn-ghost" onclick="agCloseCreate()">Annuler</button>
+            <button class="ag-btn ag-btn-primary" id="ag-create-submit" onclick="agSubmitCreate()">
+                <i class="fa-solid fa-user-plus"></i> Créer l'agent
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function agGoTo(url) { window.location.href = url; }
+    let agCurrentId = null;
+
+    function agApplyFilters() {
+        const email = document.getElementById('ag-search-input').value.trim();
+        const status = document.getElementById('ag-status-select').value;
+        const params = new URLSearchParams();
+        if (email) params.set('email', email);
+        if (status) params.set('status', status);
+        window.location.href = '?' + params.toString();
+    }
+
+    document.getElementById('ag-status-select').addEventListener('change', agApplyFilters);
+    document.getElementById('ag-search-icon').addEventListener('click', agApplyFilters);
+    document.getElementById('ag-search-input').addEventListener('keypress', e => { if (e.key === 'Enter') agApplyFilters(); });
+
+    function agOpenProfile() { document.getElementById('ag-profile-backdrop').classList.add('open'); }
+    function agCloseProfile() { document.getElementById('ag-profile-backdrop').classList.remove('open'); }
+
+    async function agViewProfile(btn) {
+        const id = btn.dataset.identifiant;
+        const defaultImg = btn.dataset.imgdefault;
+        agCurrentId = id;
+        try {
+            const res = await fetch("{% url 'utilisateur:get_info_user' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ identifiant: id })
+            });
+            const data = await res.json();
+            if (!data.success || !data.user) { alert(data.message || 'Erreur'); return; }
+            const u = data.user;
+            document.getElementById('ag-f-nom').value = u.last_name || '';
+            document.getElementById('ag-f-prenom').value = u.first_name || '';
+            document.getElementById('ag-f-email').value = u.email || '';
+            document.getElementById('ag-f-poste').value = u.poste || '';
+            document.getElementById('ag-profile-name').textContent = `${u.last_name || ''} ${u.first_name || ''}`;
+            document.getElementById('ag-profile-poste').textContent = u.poste || '—';
+            const img = document.getElementById('ag-profile-img');
+            img.src = (u.image_url && u.image_url !== 'none') ? u.image_url : defaultImg;
+            const st = document.getElementById('ag-profile-status');
+            st.className = `ag-badge ${u.status ? 'actif' : 'inactif'}`;
+            st.innerHTML = `<i class="fa-solid fa-circle-dot"></i> ${u.status ? 'Actif' : 'Inactif'}`;
+            document.getElementById('ag-approb-block').style.display = u.status ? 'none' : 'block';
+            agOpenProfile();
+        } catch (err) { console.error(err); }
+    }
+
+    async function agApprob() {
+        if (!agCurrentId) return;
+        try {
+            const res = await fetch("{% url 'utilisateur:approb_user' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ identifiant: agCurrentId })
+            });
+            const data = await res.json();
+            if (data.success) { agCloseProfile(); location.reload(); }
+            else alert(data.message || 'Erreur');
+        } catch (err) { console.error(err); }
+    }
+
+    function agOpenCreate() { agResetCreate(); document.getElementById('ag-create-backdrop').classList.add('open'); }
+    function agCloseCreate() { document.getElementById('ag-create-backdrop').classList.remove('open'); }
+
+    function agResetCreate() {
+        ['ag-c-nom', 'ag-c-prenom', 'ag-c-email', 'ag-c-poste', 'ag-c-password'].forEach(id => {
+            document.getElementById(id).value = '';
+            document.getElementById(id).classList.remove('error');
+        });
+        document.getElementById('ag-img-input').value = '';
+        document.getElementById('ag-avatar-preview-img').style.display = 'none';
+        document.getElementById('ag-avatar-icon').style.display = '';
+        const fb = document.getElementById('ag-create-feedback');
+        fb.className = 'ag-create-feedback'; fb.textContent = '';
+        const btn = document.getElementById('ag-create-submit');
+        btn.disabled = false; btn.style.opacity = '1';
+    }
+
+    function agPreviewAvatar(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.getElementById('ag-avatar-preview-img');
+            img.src = e.target.result;
+            img.style.display = 'block';
+            document.getElementById('ag-avatar-icon').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function agTogglePwd() {
+        const inp = document.getElementById('ag-c-password');
+        const ico = document.getElementById('ag-pwd-toggle');
+        if (inp.type === 'password') { inp.type = 'text'; ico.className = 'fa-solid fa-eye-slash ag-pwd-toggle'; } 
+        else { inp.type = 'password'; ico.className = 'fa-solid fa-eye ag-pwd-toggle'; }
+    }
+
+    function agShowFeedback(msg, type) {
+        const fb = document.getElementById('ag-create-feedback');
+        fb.className = `ag-create-feedback ${type}`;
+        fb.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+    }
+
+    async function agSubmitCreate() {
+        const nom = document.getElementById('ag-c-nom').value.trim();
+        const prenom = document.getElementById('ag-c-prenom').value.trim();
+        const email = document.getElementById('ag-c-email').value.trim();
+        const poste = document.getElementById('ag-c-poste').value.trim();
+        const password = document.getElementById('ag-c-password').value.trim();
+        const imgFile = document.getElementById('ag-img-input').files[0];
+
+        let hasError = false;
+        [['ag-c-nom', nom], ['ag-c-prenom', prenom], ['ag-c-email', email], ['ag-c-poste', poste], ['ag-c-password', password]].forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (!val) { el.classList.add('error'); hasError = true; } else el.classList.remove('error');
+        });
+
+        if (hasError) { agShowFeedback('Veuillez remplir tous les champs obligatoires.', 'error'); return; }
+        if (password.length < 8) {
+            document.getElementById('ag-c-password').classList.add('error');
+            agShowFeedback('Le mot de passe doit contenir au moins 8 caractères.', 'error'); return;
+        }
+
+        const btn = document.getElementById('ag-create-submit');
+        btn.disabled = true; btn.style.opacity = '.6';
+
+        const fd = new FormData();
+        fd.append('last_name', nom); fd.append('first_name', prenom); fd.append('email', email);
+        fd.append('post', poste); fd.append('password', password);
+        if (imgFile) fd.append('image', imgFile);
+
+        try {
+            const res = await fetch("{% url 'create_agent' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' }, body: fd });
+            const data = await res.json();
+            if (data.success) { agShowFeedback(data.message, 'success'); setTimeout(() => { agCloseCreate(); location.reload(); }, 1500); } 
+            else { agShowFeedback(data.message || 'Une erreur est survenue.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
+        } catch (err) { console.error(err); agShowFeedback('Erreur réseau. Veuillez réessayer.', 'error'); btn.disabled = false; btn.style.opacity = '1'; }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; agCloseProfile(); agCloseCreate(); });
+</script>
+
+{% endblock %}

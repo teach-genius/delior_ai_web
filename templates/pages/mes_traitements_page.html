@@ -1,0 +1,675 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes traitements{% endblock %}
+
+{% block content_main %}
+<style>
+  .mt-page {
+    --mt-accent: #3b5bdb;
+    --mt-accent-light: #eef2ff;
+    --mt-border: #e4e9f2;
+    --mt-radius: 16px;
+    --mt-shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+  }
+  
+  .mt-page { display:flex; flex-direction:column; gap:20px; padding-bottom:40px; }
+  
+  /* HEADER */
+  .mt-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .mt-title-group { display:flex; align-items:center; gap:10px; }
+  .mt-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#0d1117; letter-spacing:-0.5px; margin:0; }
+  .mt-count { font-size:11px; font-weight:600; color:var(--mt-accent); background:var(--mt-accent-light); border:1px solid #c5d0f7; border-radius:20px; padding:3px 11px; }
+
+  /* TOOLBAR */
+  .mt-toolbar { 
+      background:#fff; 
+      border:1.5px solid var(--mt-border); 
+      border-radius:var(--mt-radius); 
+      box-shadow:var(--mt-shadow-sm); 
+      display:flex; 
+      align-items:center; 
+      gap:12px; 
+      flex-wrap:wrap; 
+      padding: 12px; 
+  }
+  
+  .mt-search { 
+      display:flex; align-items:center; gap:8px; 
+      background:#fff; border:1.5px solid var(--mt-border); 
+      border-radius:30px; padding:0 14px; height:36px; 
+      flex: 1 1 200px; /* S'adapte mais garde une taille min */
+      min-width: 0;
+      transition:border-color .2s, box-shadow .2s; 
+  }
+  .mt-search:focus-within { border-color:var(--mt-accent); box-shadow:0 0 0 3px rgba(59,91,219,.1); }
+  .mt-search i { color:#8a94a6; font-size:12px; flex-shrink: 0; }
+  .mt-search input { border:none; background:transparent; outline:none; font-size:13px; color:#0d1117; width:100%; font-family:inherit; }
+  .mt-search input::placeholder { color:#8a94a6; }
+
+  .mt-filter { 
+      display:flex; align-items:center; gap:7px; 
+      background:#fff; border:1.5px solid var(--mt-border); 
+      border-radius:30px; padding:0 14px; height:36px; 
+      flex-shrink: 0;
+  }
+  .mt-filter i { color:#8a94a6; font-size:11px; }
+  .mt-filter label { font-size:12px; color:#4a5568; white-space:nowrap; }
+  .mt-filter select { border:none; background:transparent; outline:none; font-size:12px; color:#0d1117; font-family:inherit; cursor:pointer; }
+
+  .mt-toolbar-sep { width:1px; height:22px; background:var(--mt-border); margin:0 2px; flex-shrink: 0; display: block; }
+  
+  .mt-toolbar-right { 
+      margin-left:auto; 
+      display:flex; 
+      gap:8px; 
+      flex-shrink: 0; 
+  }
+  
+  .mt-btn-toolbar { 
+      display:inline-flex; align-items:center; justify-content: center; gap:6px; 
+      padding:0 14px; height:36px; border-radius:10px; 
+      font-size:12px; font-weight:600; font-family:inherit; 
+      cursor:pointer; transition:all .15s; white-space:nowrap; border: none; 
+  }
+  .mt-btn-toolbar-ghost { background:#f8fafd; color:#4a5568; border:1.5px solid var(--mt-border); }
+  .mt-btn-toolbar-ghost:hover { background:#eef2ff; border-color:#c5d0f7; color:var(--mt-accent); }
+
+  /* TABLEAU RESPONSIVE */
+  .mt-panel { 
+      background:#fff; 
+      border:1.5px solid var(--mt-border); 
+      border-radius:var(--mt-radius); 
+      box-shadow:var(--mt-shadow-sm); 
+      overflow: visible; /* Plus de scroll horizontal forcé */
+      width: 100%;
+  }
+  
+  /* Grille dynamique : 
+     - Col 1 (Nom) : Prend de l'espace (min 150px)
+     - Col 2,3,4 (Tel, Date, Etat) : Taille auto selon contenu
+     - Col 5 (Outils) : Prend le reste de l'espace
+  */
+  .mt-table-head, .mt-row { 
+      display:grid; 
+      grid-template-columns: 1.5fr 0.8fr 0.7fr 0.8fr 1.5fr; 
+      gap:12px; 
+      padding:12px 20px; 
+      align-items:center; 
+      width: 100%;
+      box-sizing: border-box;
+  }
+
+  .mt-table-head { 
+      background:#f8fafd; 
+      border-bottom:1.5px solid var(--mt-border); 
+      font-size:9.5px; font-weight:700; text-transform:uppercase; 
+      letter-spacing:0.7px; color:#8a94a6; 
+  }
+  
+  .mt-row { 
+      border-bottom:1px solid #f1f5f9; 
+      animation:mt-fadeIn .25s ease both; 
+      transition:background .12s; 
+  }
+  .mt-row:last-child { border-bottom:none; }
+  .mt-row:hover { background:#f8fafd; }
+  
+  @keyframes mt-fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+  .mt-th { display:flex; align-items:center; }
+  .mt-th.center { justify-content:center; }
+  .mt-table-body { display:flex; flex-direction:column; }
+  
+  .mt-cell { 
+      display:flex; align-items:center; 
+      font-size:12.5px; color:#374151; 
+      min-width:0; /* Important pour le text-overflow */
+      overflow: hidden;
+  }
+  .mt-cell.center { justify-content:center; }
+  .mt-cell p { 
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; 
+      font-size:12px; color:#4a5568; margin: 0; width: 100%;
+  }
+
+  .mt-identity { display:flex; align-items:center; gap:10px; min-width:0; width: 100%; }
+  .mt-logo { 
+      width:36px; height:36px; border-radius:50%; 
+      background:#eef2ff; border:1.5px solid #c5d0f7; 
+      display:flex; align-items:center; justify-content:center; 
+      flex-shrink:0; overflow:hidden; 
+  }
+  .mt-logo img { width:100%; height:100%; object-fit:contain; padding:4px; }
+  .mt-identity-info { display:flex; flex-direction:column; gap:1px; min-width:0; flex: 1; }
+  .mt-identity-name { 
+      font-size:12.5px; font-weight:600; color:#0d1117; 
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; 
+  }
+  .mt-identity-email { 
+      font-size:10.5px; color:#8a94a6; 
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; 
+  }
+
+  .mt-badge { 
+      display:inline-flex; align-items:center; justify-content: center;
+      gap:5px; padding:3px 10px; border-radius:20px; 
+      font-size:10.5px; font-weight:600; white-space:nowrap; border:1px solid; 
+  }
+  .mt-badge i { font-size:7px; }
+  .mt-badge.en_cours { background:#fff7ed; border-color:#fed7aa; color:#c2410c; }
+  .mt-badge.termine  { background:#ecfdf5; border-color:#a7f3d0; color:#059669; }
+
+  /* OUTILS FLEXIBLES */
+  .mt-tools { 
+      display:flex; align-items:center; 
+      gap:6px; 
+      flex-wrap: wrap; /* Permet aux boutons de passer à la ligne si besoin */
+      width: 100%;
+      justify-content: flex-start;
+  }
+  
+  .mt-btn { 
+      display:inline-flex; align-items:center; justify-content:center; 
+      gap:4px; padding:0 10px; height:30px; 
+      border-radius:7px; font-size:10.5px; font-weight:600; 
+      font-family:inherit; cursor:pointer; transition:all .15s; 
+      border:1.5px solid; white-space:nowrap; flex-shrink:0; 
+  }
+  .mt-btn:active { transform:scale(0.97); }
+  .mt-btn-green  { background:#ecfdf5; border-color:#6ee7b7; color:#059669; }
+  .mt-btn-green:hover  { background:#d1fae5; }
+  .mt-btn-blue   { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
+  .mt-btn-blue:hover   { background:#dbeafe; }
+  .mt-btn-gray   { background:#f8fafd; border-color:#e4e9f2; color:#4a5568; }
+  .mt-btn-gray:hover   { background:#eef2ff; border-color:#c5d0f7; color:var(--mt-accent); }
+  .mt-btn-danger { background:#fff0f3; border-color:#fda4af; color:#e11d48; }
+  .mt-btn-danger:hover { background:#ffe4e6; }
+  .mt-btn-dl     { background:#faf5ff; border-color:#d8b4fe; color:#7c3aed; }
+  .mt-btn-dl:hover     { background:#f3e8ff; }
+
+  /* PAGINATION */
+  .mt-pag { 
+      display:flex; align-items:center; justify-content:space-between; 
+      padding:13px 20px; background:#f8fafd; 
+      border:1.5px solid var(--mt-border); 
+      border-radius:var(--mt-radius); 
+      box-shadow:var(--mt-shadow-sm); 
+      flex-wrap: wrap; gap: 10px; 
+  }
+  .mt-pag-count { font-size:11.5px; color:#8a94a6; font-weight:500; }
+  .mt-pag-count strong { color:#0d1117; }
+  .mt-pag-controls { display:flex; align-items:center; gap:4px; }
+  .mt-pag-btn { 
+      width:32px; height:32px; border-radius:8px; 
+      border:1.5px solid #e4e9f2; background:#fff; 
+      color:#4a5568; font-size:12px; 
+      display:flex; align-items:center; justify-content:center; 
+      cursor:pointer; transition:all .15s; 
+  }
+  .mt-pag-btn:hover { background:#eef2ff; color:var(--mt-accent); border-color:#c5d0f7; }
+  .mt-pag-btn.active { background:#3b5bdb; color:#fff; border-color:#3b5bdb; font-weight:600; pointer-events:none; }
+  .mt-pag-btn.disabled { opacity:.35; pointer-events:none; }
+
+  .mt-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:60px 20px; color:#8a94a6; }
+  .mt-empty-icon { width:56px; height:56px; border-radius:14px; background:#f4f6fb; border:2px dashed #d0d8ea; display:flex; align-items:center; justify-content:center; font-size:22px; color:#c0c8d8; }
+  .mt-empty p { font-size:13px; font-weight:600; color:#4a5568; }
+  .mt-empty small { font-size:11px; }
+
+  /* MODALS */
+  .mt-modal-backdrop { position:fixed; inset:0; background:rgba(13,17,23,.45); backdrop-filter:blur(6px); z-index:300; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; padding: 10px; }
+  .mt-modal-backdrop.open { opacity:1; pointer-events:all; }
+  
+  .mt-modal { background:#fff; border:1.5px solid #e4e9f2; border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.14); width:540px; max-width:100%; max-height:80vh; overflow:hidden; display:flex; flex-direction:column; transform:translateY(16px) scale(.97); transition:transform .22s ease; }
+  .mt-modal-backdrop.open .mt-modal { transform:translateY(0) scale(1); }
+  
+  .mt-modal-head { display:flex; align-items:center; justify-content:space-between; padding:16px 22px; background:#0a0f1e; position:relative; }
+  .mt-modal-head::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:2px; background:linear-gradient(90deg,#3b5bdb,#818cf8,#f472b6); }
+  .mt-modal-head-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:#fff; }
+  .mt-modal-close { width:30px; height:30px; border-radius:8px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:#94a3b8; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s, color .15s; }
+  .mt-modal-close:hover { background:rgba(244,63,94,.2); color:#f43f5e; }
+  
+  .mt-modal-body { padding:22px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; }
+  .mt-modal-body::-webkit-scrollbar { width:3px; }
+  .mt-modal-body::-webkit-scrollbar-thumb { background:#e4e9f2; border-radius:3px; }
+  
+  .mt-query-block { background:#f8fafd; border:1.5px solid #e4e9f2; border-radius:12px; padding:14px 16px; }
+  .mt-query-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#8a94a6; margin-bottom:8px; }
+  .mt-query-text  { font-size:13px; color:#0d1117; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+
+  .mt-confirm-modal { background:#fff; border:1.5px solid #e4e9f2; border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.14); width:420px; max-width:100%; overflow:hidden; transform:translateY(16px) scale(.97); transition:transform .22s ease; }
+  .mt-modal-backdrop.open .mt-confirm-modal { transform:translateY(0) scale(1); }
+  
+  .mt-confirm-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .mt-confirm-icon.green { background:#ecfdf5; color:#059669; }
+  .mt-confirm-icon.red   { background:#fff0f3; color:#e11d48; }
+  
+  .mt-confirm-body { padding:24px 22px; display:flex; flex-direction:column; gap:16px; }
+  .mt-confirm-info { display:flex; align-items:flex-start; gap:14px; }
+  .mt-confirm-texts { display:flex; flex-direction:column; gap:4px; }
+  .mt-confirm-title { font-size:15px; font-weight:700; color:#0d1117; }
+  .mt-confirm-sub   { font-size:12.5px; color:#4a5568; line-height:1.5; }
+  
+  .mt-confirm-footer { display:flex; gap:8px; justify-content:flex-end; padding:14px 22px; border-top:1.5px solid #e4e9f2; background:#f8fafd; flex-wrap: wrap; }
+  .mt-confirm-btn { display:inline-flex; align-items:center; gap:6px; padding:0 16px; height:36px; border-radius:10px; font-size:12px; font-weight:600; font-family:inherit; cursor:pointer; transition:all .15s; border:1.5px solid; flex: 1; justify-content: center; }
+  .mt-confirm-btn-cancel { background:#fff; border-color:#e4e9f2; color:#4a5568; }
+  .mt-confirm-btn-cancel:hover { background:#f8fafd; }
+  .mt-confirm-btn-green  { background:#059669; border-color:#059669; color:#fff; }
+  .mt-confirm-btn-green:hover  { background:#047857; }
+  .mt-confirm-btn-red    { background:#e11d48; border-color:#e11d48; color:#fff; }
+  .mt-confirm-btn-red:hover    { background:#be123c; }
+
+  /* ══ MEDIA QUERIES RESPONSIVE ══ */
+  
+  /* Tablettes et petits laptops */
+  @media (max-width: 1024px) {
+    .mt-table-head, .mt-row {
+        grid-template-columns: 1.2fr 0.8fr 0.7fr 0.8fr 1.5fr;
+        gap: 8px;
+        padding: 10px 15px;
+    }
+    .mt-identity-name { font-size: 11.5px; }
+    .mt-btn { padding: 0 8px; font-size: 10px; height: 28px; }
+  }
+
+  /* Mobiles / Écrans étroits */
+  @media (max-width: 768px) {
+    .mt-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .mt-search { width: 100%; flex: none; }
+    .mt-filter { width: 100%; justify-content: space-between; }
+    .mt-toolbar-sep { display: none; }
+    
+    .mt-toolbar-right {
+        margin-left: 0;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .mt-btn-toolbar { width: 100%; }
+
+    .mt-title { font-size: 18px; }
+
+    /* Adaptation du tableau pour mobile : on réduit les colonnes "moins importantes" */
+    .mt-table-head, .mt-row {
+        grid-template-columns: 1.5fr 0.6fr 0.6fr 0.7fr 1.2fr;
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .mt-logo { width: 30px; height: 30px; }
+    .mt-identity-name { font-size: 11px; }
+    .mt-identity-email { font-size: 9.5px; }
+    
+    .mt-cell p { font-size: 11px; }
+    
+    .mt-tools { justify-content: flex-start; gap: 4px; }
+    .mt-btn { padding: 0 6px; font-size: 9.5px; height: 26px; }
+    .mt-btn span { display: none; } /* Cache le texte des boutons, garde icône */
+    .mt-btn i { margin: 0; }
+    
+    .mt-pag { justify-content: center; text-align: center; }
+    .mt-pag-count { width: 100%; margin-bottom: 8px; }
+  }
+
+  /* Très petits mobiles */
+  @media (max-width: 480px) {
+    .mt-table-head { display: none; } /* Optionnel: cacher l'en-tête sur très petit écran */
+    
+    .mt-row {
+        grid-template-columns: 1fr; /* Tout sur une ligne verticale ou adaptatif */
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid #e4e9f2;
+        margin-bottom: 10px;
+        border-radius: 12px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mt-cell {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 4px 0;
+    }
+    
+    .mt-cell.center { justify-content: flex-start; }
+    
+    /* Réorganisation visuelle pour mobile */
+    .mt-cell::before {
+        content: attr(data-label);
+        font-size: 9px;
+        color: #8a94a6;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 2px;
+        display: block;
+    }
+    
+    .mt-tools {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #e4e9f2;
+    }
+    
+    .mt-btn { flex: 1; justify-content: center; }
+    .mt-btn span { display: inline; } /* Réaffiche le texte si nécessaire ou garde icône */
+    
+    .mt-confirm-footer { flex-direction: column-reverse; }
+    .mt-confirm-btn { width: 100%; }
+  }
+</style>
+
+<div class="mt-page">
+
+  <div class="mt-header">
+    <div class="mt-title-group">
+      <h1 class="mt-title">Mes traitements</h1>
+      <span class="mt-count">{{ page_obj.paginator.count }} dossier{{ page_obj.paginator.count|pluralize }}</span>
+    </div>
+  </div>
+
+  <!-- Toolbar — filtres serveur -->
+  <form method="get" id="mt-form">
+    <div class="mt-toolbar">
+      <div class="mt-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" name="q" id="mt-search-input"
+          placeholder="Rechercher un candidat…"
+          value="{{ q }}"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();mtSubmit()}">
+      </div>
+
+      <div class="mt-filter">
+        <i class="fa-solid fa-sliders"></i>
+        <label for="mt-status-select">État :</label>
+        <select name="statut" id="mt-status-select" onchange="mtSubmit()">
+          <option value="" {% if not f_statut %}selected{% endif %}>Tous</option>
+          <option value="en_cours" {% if f_statut == 'en_cours' %}selected{% endif %}>En cours</option>
+          <option value="termine"  {% if f_statut == 'termine'  %}selected{% endif %}>Terminé</option>
+        </select>
+      </div>
+
+      <div class="mt-toolbar-sep"></div>
+
+      <div class="mt-toolbar-right">
+        <button type="button" class="mt-btn-toolbar mt-btn-toolbar-ghost"
+          onclick="document.getElementById('mt-search-input').value='';document.getElementById('mt-status-select').value='';mtSubmit()">
+          <i class="fa-solid fa-rotate-left"></i> <span>Réinitialiser</span>
+        </button>
+        <button type="submit" class="mt-btn-toolbar mt-btn-toolbar-ghost">
+          <i class="fa-solid fa-magnifying-glass"></i> <span>Rechercher</span>
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="mt-panel">
+    <div class="mt-table-head">
+      <div class="mt-th">Candidat</div>
+      <div class="mt-th">Téléphone</div>
+      <div class="mt-th">Date</div>
+      <div class="mt-th center">État</div>
+      <div class="mt-th">Outils</div>
+    </div>
+
+    <div class="mt-table-body">
+      {% for c in page_obj %}
+      <div class="mt-row" id="mt-row-{{ c.candidat_id }}">
+
+        <div class="mt-cell" data-label="Candidat">
+          <div class="mt-identity">
+            <div class="mt-logo">
+              <img src="{% static 'imgs/symbole.png' %}" alt="">
+            </div>
+            <div class="mt-identity-info">
+              <div class="mt-identity-name">{{ c.nom_complet }}</div>
+              <div class="mt-identity-email">{{ c.email }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-cell" data-label="Téléphone"><p>{{ c.telephone|default:"—" }}</p></div>
+
+        <div class="mt-cell" data-label="Date">
+          <p style="font-size:11px;color:#8a94a6;">{{ c.date_importation|date:"d/m/Y" }}</p>
+        </div>
+
+        <div class="mt-cell center" data-label="État">
+          <span class="mt-badge {{ c.etat_analyse }}" id="mt-badge-{{ c.candidat_id }}">
+            <i class="fa-solid fa-circle-dot"></i>
+            {% if c.etat_analyse == "en_cours" %}En cours{% else %}Terminé{% endif %}
+          </span>
+        </div>
+
+        <div class="mt-cell" data-label="Outils">
+          <div class="mt-tools" id="mt-tools-{{ c.candidat_id }}">
+            <button class="mt-btn mt-btn-gray" title="Fiche"
+              onclick="mtViewQuery('{{ c.candidat_id }}','{{ c.nom_complet|escapejs }}')">
+              <i class="fa-solid fa-file-magnifying-glass"></i> <span>Fiche</span>
+            </button>
+            {% if c.etat_analyse == "en_cours" %}
+            <button class="mt-btn mt-btn-green" title="Terminer"
+              onclick="mtConfirmTerminer('{{ c.candidat_id }}','{{ c.nom_complet|escapejs }}')">
+              <i class="fa-solid fa-circle-check"></i> <span>Terminer</span>
+            </button>
+            <button class="mt-btn mt-btn-danger" title="Annuler"
+              onclick="mtConfirmAnnuler('{{ c.candidat_id }}','{{ c.nom_complet|escapejs }}')">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            {% endif %}
+            {% if c.fichier_pdf_origine %}
+            <button class="mt-btn mt-btn-blue" title="CV"
+              data-url="{{ c.fichier_pdf_origine.url }}"
+              onclick="openViewDoc(this)">
+              <i class="fa-solid fa-file-pdf"></i> <span>CV</span>
+            </button>
+            {% endif %}
+            {% if c.candidat_id in rapports_ids %}
+            <button class="mt-btn mt-btn-gray" title="Rapport"
+              data-identifiant="{{ c.candidat_id }}"
+              onclick="VoirRapport(this)">
+              <i class="fa-solid fa-file-lines"></i> <span>Rapport</span>
+            </button>
+            <button class="mt-btn mt-btn-dl" title="Télécharger"
+              data-identifiant="{{ c.candidat_id }}"
+              onclick="ExportRapport(this)">
+              <i class="fa-solid fa-download"></i>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="mt-empty">
+        <div class="mt-empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <p>Aucun traitement trouvé</p>
+        <small>{% if q or f_statut %}Modifiez les filtres.{% else %}Les candidats que vous analyserez apparaîtront ici.{% endif %}</small>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="mt-pag">
+    <div class="mt-pag-count">
+      Page <strong>{{ page_obj.number }}</strong> sur <strong>{{ page_obj.paginator.num_pages }}</strong>
+      &nbsp;·&nbsp; <strong>{{ page_obj.paginator.count }}</strong> dossier{{ page_obj.paginator.count|pluralize }}
+    </div>
+    <div class="mt-pag-controls">
+      <div class="mt-pag-btn {% if not page_obj.has_previous %}disabled{% endif %}"
+        {% if page_obj.has_previous %}onclick="mtGoTo({{ page_obj.previous_page_number }})"{% endif %}>
+        <i class="fa-solid fa-angle-left"></i>
+      </div>
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <div class="mt-pag-btn active">{{ num }}</div>
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+          <div class="mt-pag-btn" onclick="mtGoTo({{ num }})">{{ num }}</div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="mt-pag-btn {% if not page_obj.has_next %}disabled{% endif %}"
+        {% if page_obj.has_next %}onclick="mtGoTo({{ page_obj.next_page_number }})"{% endif %}>
+        <i class="fa-solid fa-angle-right"></i>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Modal fiche de poste -->
+<div class="mt-modal-backdrop" id="mt-query-backdrop" onclick="if(event.target===this)mtCloseQuery()">
+  <div class="mt-modal">
+    <div class="mt-modal-head">
+      <div class="mt-modal-head-title" id="mt-query-modal-title">Fiche de poste</div>
+      <button class="mt-modal-close" onclick="mtCloseQuery()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mt-modal-body">
+      <div class="mt-query-block">
+        <div class="mt-query-label">Requête de matching</div>
+        <div class="mt-query-text" id="mt-query-content">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirm terminer -->
+<div class="mt-modal-backdrop" id="mt-confirm-terminer-backdrop">
+  <div class="mt-confirm-modal">
+    <div class="mt-modal-head">
+      <div class="mt-modal-head-title">Confirmer la clôture</div>
+      <button class="mt-modal-close" onclick="mtCloseConfirmTerminer()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mt-confirm-body">
+      <div class="mt-confirm-info">
+        <div class="mt-confirm-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="mt-confirm-texts">
+          <div class="mt-confirm-title">Marquer comme terminé ?</div>
+          <div class="mt-confirm-sub">Le dossier de <strong id="mt-terminer-nom"></strong> sera clôturé. Cette action est définitive.</div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-confirm-footer">
+      <button class="mt-confirm-btn mt-confirm-btn-cancel" onclick="mtCloseConfirmTerminer()">Annuler</button>
+      <button class="mt-confirm-btn mt-confirm-btn-green" id="mt-terminer-confirm-btn">
+        <i class="fa-solid fa-circle-check"></i> Confirmer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirm annuler -->
+<div class="mt-modal-backdrop" id="mt-confirm-annuler-backdrop">
+  <div class="mt-confirm-modal">
+    <div class="mt-modal-head">
+      <div class="mt-modal-head-title">Confirmer l'annulation</div>
+      <button class="mt-modal-close" onclick="mtCloseConfirmAnnuler()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mt-confirm-body">
+      <div class="mt-confirm-info">
+        <div class="mt-confirm-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="mt-confirm-texts">
+          <div class="mt-confirm-title">Annuler ce traitement ?</div>
+          <div class="mt-confirm-sub">Le dossier de <strong id="mt-annuler-nom"></strong> repassera en attente et disparaîtra de vos traitements.</div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-confirm-footer">
+      <button class="mt-confirm-btn mt-confirm-btn-cancel" onclick="mtCloseConfirmAnnuler()">Retour</button>
+      <button class="mt-confirm-btn mt-confirm-btn-red" id="mt-annuler-confirm-btn">
+        <i class="fa-solid fa-xmark"></i> Annuler le traitement
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const QUERIES = {
+  {% for c in page_obj %}
+  '{{ c.candidat_id }}': '{{ last_query|default:"Aucune requête enregistrée"|escapejs }}',
+  {% endfor %}
+};
+
+function mtSubmit() { document.getElementById('mt-form').submit(); }
+
+function mtGoTo(page) {
+  const params = new URLSearchParams(window.location.search);
+  params.set('page', page);
+  window.location.href = '?' + params.toString();
+}
+
+function mtViewQuery(id, nom) {
+  document.getElementById('mt-query-modal-title').textContent = `Fiche — ${nom}`;
+  document.getElementById('mt-query-content').textContent = QUERIES[id] || 'Aucune requête enregistrée';
+  document.getElementById('mt-query-backdrop').classList.add('open');
+}
+function mtCloseQuery() { document.getElementById('mt-query-backdrop').classList.remove('open'); }
+
+function mtConfirmTerminer(id, nom) {
+  document.getElementById('mt-terminer-nom').textContent = nom;
+  document.getElementById('mt-terminer-confirm-btn').onclick = () => mtTerminer(id);
+  document.getElementById('mt-confirm-terminer-backdrop').classList.add('open');
+}
+function mtCloseConfirmTerminer() { document.getElementById('mt-confirm-terminer-backdrop').classList.remove('open'); }
+
+async function mtTerminer(id) {
+  mtCloseConfirmTerminer();
+  const res = await fetch(`/mes-traitements/terminer/${id}/`, {
+    method:'POST', headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    const badge = document.getElementById(`mt-badge-${id}`);
+    badge.className = 'mt-badge termine';
+    badge.innerHTML = '<i class="fa-solid fa-circle-dot"></i> Terminé';
+    const tools = document.getElementById(`mt-tools-${id}`);
+    tools.querySelectorAll('.mt-btn-green,.mt-btn-danger').forEach(b => b.remove());
+    const ficheBtn = tools.querySelector('.mt-btn-gray');
+    if (ficheBtn) ficheBtn.remove();
+  }
+}
+
+function mtConfirmAnnuler(id, nom) {
+  document.getElementById('mt-annuler-nom').textContent = nom;
+  document.getElementById('mt-annuler-confirm-btn').onclick = () => mtAnnuler(id);
+  document.getElementById('mt-confirm-annuler-backdrop').classList.add('open');
+}
+function mtCloseConfirmAnnuler() { document.getElementById('mt-confirm-annuler-backdrop').classList.remove('open'); }
+
+async function mtAnnuler(id) {
+  mtCloseConfirmAnnuler();
+  const res = await fetch(`/mes-traitements/annuler/${id}/`, {
+    method:'POST', headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    const row = document.getElementById(`mt-row-${id}`);
+    row.style.transition = 'opacity .3s, transform .3s';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(20px)';
+    setTimeout(() => row.remove(), 300);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  mtCloseQuery();
+  mtCloseConfirmTerminer();
+  mtCloseConfirmAnnuler();
+});
+</script>
+{% endblock %}

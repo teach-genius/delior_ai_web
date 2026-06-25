@@ -1,0 +1,560 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content_main %}
+
+<style>
+.nt-page {
+    --rp-accent:       #3b5bdb;
+    --rp-accent-light: #eef2ff;
+    --rp-accent-mid:   #c5d0f7;
+    --rp-border:       #e4e9f2;
+    --rp-text-1:       #0d1117;
+    --rp-text-2:       #4a5568;
+    --rp-text-3:       #8a94a6;
+    --rp-surface:      #ffffff;
+    --rp-radius:       16px;
+    --rp-radius-sm:    10px;
+    --rp-shadow-sm:    0 1px 3px rgba(0,0,0,.06);
+    --rp-font-head:    'Syne', sans-serif;
+}
+
+.nt-page { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+    padding-bottom: 40px; 
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ── Header ── */
+.t-header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 16px; 
+    flex-wrap: wrap; 
+}
+.nt-title-group { display: flex; align-items: center; gap: 10px; }
+.nt-title { 
+    font-family: var(--rp-font-head); 
+    font-size: 22px; 
+    font-weight: 800; 
+    color: var(--rp-text-1); 
+    letter-spacing: -0.5px; 
+    margin: 0;
+    white-space: nowrap;
+}
+.nt-count { 
+    font-size: 11px; 
+    font-weight: 600; 
+    color: var(--rp-accent); 
+    background: var(--rp-accent-light); 
+    border: 1px solid var(--rp-accent-mid); 
+    border-radius: 20px; 
+    padding: 3px 11px; 
+    white-space: nowrap;
+}
+
+/* ── Filtres Responsive ── */
+.nt-filters {
+    background: var(--rp-surface);
+    border: 1.5px solid var(--rp-border);
+    border-radius: var(--rp-radius);
+    padding: 14px 18px;
+    box-shadow: var(--rp-shadow-sm);
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nt-filter-group {
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+    background: #f8fafd; 
+    border: 1.5px solid var(--rp-border);
+    border-radius: 30px; 
+    padding: 0 14px; 
+    height: 36px;
+    flex-shrink: 0; /* Empêche le rétrécissement excessif */
+}
+
+.nt-filter-group i     { color: var(--rp-text-3); font-size: 11px; }
+.nt-filter-group label { font-size: 12px; color: var(--rp-text-2); white-space: nowrap; }
+.nt-filter-group select {
+    border: none; 
+    background: transparent; 
+    outline: none;
+    font-size: 12px; 
+    color: var(--rp-text-1); 
+    font-family: inherit; 
+    cursor: pointer;
+    max-width: 120px;
+}
+
+.nt-filter-sep { 
+    width: 1px; 
+    height: 22px; 
+    background: var(--rp-border); 
+    flex-shrink: 0;
+}
+
+.nt-filter-right { 
+    margin-left: auto; 
+    display: flex; 
+    gap: 8px; 
+    flex-shrink: 0;
+}
+
+.nt-btn {
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center;
+    gap: 6px; 
+    padding: 7px 16px; 
+    border-radius: var(--rp-radius-sm);
+    font-size: 12px; 
+    font-weight: 600; 
+    font-family: inherit;
+    cursor: pointer; 
+    transition: all .15s; 
+    white-space: nowrap; 
+    border: none;
+    text-decoration: none;
+}
+.nt-btn.primary { background: var(--rp-accent); color: #fff; }
+.nt-btn.primary:hover { background: #2f4ac7; box-shadow: 0 4px 12px rgba(59,91,219,.3); }
+.nt-btn.ghost { background: #f8fafd; color: var(--rp-text-2); border: 1.5px solid var(--rp-border); }
+.nt-btn.ghost:hover { background: var(--rp-accent-light); border-color: var(--rp-accent-mid); color: var(--rp-accent); }
+
+/* ── List panel ── */
+.nt-list {
+    display: flex; 
+    flex-direction: column;
+    background: var(--rp-surface);
+    border: 1.5px solid var(--rp-border);
+    border-radius: var(--rp-radius);
+    overflow: hidden; /* Important pour les bords arrondis */
+    box-shadow: var(--rp-shadow-sm);
+    width: 100%;
+}
+
+.nt-list-head {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-bottom: 1.5px solid var(--rp-border);
+    background: #fafbfe;
+    flex-shrink: 0;
+}
+
+.nt-list-title {
+    font-family: var(--rp-font-head); 
+    font-size: 13px; 
+    font-weight: 800;
+    color: var(--rp-text-1);
+    display: flex; 
+    align-items: center; 
+    gap: 9px;
+}
+
+.nt-list-icon {
+    width: 28px; height: 28px; 
+    border-radius: 8px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 12px;
+    background: var(--rp-accent-light); 
+    color: var(--rp-accent);
+    flex-shrink: 0;
+}
+
+/* ── Item Responsive ── */
+.nt-item {
+    display: flex; 
+    align-items: flex-start; 
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--rp-border);
+    transition: background .15s;
+    width: 100%;
+    box-sizing: border-box;
+}
+.nt-item:last-child { border-bottom: none; }
+.nt-item:hover { background: #fafbfe; }
+.nt-item.unread { background: #f9fbff; }
+.nt-item.unread .nt-item-msg { font-weight: 600; color: var(--rp-text-1); }
+
+.nt-icon-wrap {
+    width: 38px; height: 38px; 
+    border-radius: 10px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 15px; 
+    flex-shrink: 0;
+}
+.icon-Infos    { background: #eef2ff; color: #3b5bdb; }
+.icon-Succes   { background: #f0fdf4; color: #10b981; }
+.icon-Error    { background: #fff0f4; color: #f43f5e; }
+.icon-Warning  { background: #fffbeb; color: #f59e0b; }
+
+.nt-item-content { 
+    flex: 1; 
+    min-width: 0; /* Crucial pour le text-overflow */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nt-item-top { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    flex-wrap: wrap;
+}
+
+.nt-tag {
+    display: inline-flex; 
+    align-items: center; 
+    gap: 4px;
+    padding: 2px 8px; 
+    border-radius: 20px;
+    font-size: 10px; 
+    font-weight: 700; 
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.nt-tag.tag-Infos   { background: #eef2ff; border-color: #c5d0f7; color: #3b5bdb; }
+.nt-tag.tag-Succes  { background: #f0fdf4; border-color: #6ee7b7; color: #065f46; }
+.nt-tag.tag-Error   { background: #fff0f4; border-color: #fca5a5; color: #dc2626; }
+.nt-tag.tag-Warning { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+
+.nt-item-date { 
+    font-size: 10.5px; 
+    color: var(--rp-text-3); 
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nt-item-msg  { 
+    font-size: 13px; 
+    color: var(--rp-text-2); 
+    line-height: 1.5; 
+    word-wrap: break-word; /* Casse les longs mots si nécessaire */
+}
+
+.nt-unread-dot {
+    width: 7px; height: 7px; 
+    border-radius: 50%;
+    background: var(--rp-accent); 
+    flex-shrink: 0; 
+    margin-top: 6px;
+    margin-left: auto; /* Pousse le dot à droite si espace */
+}
+
+/* ── Pagination Responsive ── */
+.nt-pagination {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-top: 1.5px solid var(--rp-border);
+    background: #f8fafd;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.nt-pag-count { 
+    font-size: 11.5px; 
+    color: var(--rp-text-3); 
+    white-space: nowrap;
+}
+.nt-pag-count strong { color: var(--rp-text-1); }
+
+.nt-pag-btns { 
+    display: flex; 
+    align-items: center; 
+    gap: 4px; 
+    flex-shrink: 0;
+}
+.nt-pag-btn {
+    width: 32px; height: 32px; 
+    border-radius: 8px;
+    border: 1.5px solid var(--rp-border); 
+    background: #fff;
+    color: var(--rp-text-2); 
+    font-size: 12px; 
+    font-weight: 600;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    text-decoration: none; 
+    transition: all .15s;
+    flex-shrink: 0;
+}
+.nt-pag-btn:hover        { background: var(--rp-accent-light); color: var(--rp-accent); border-color: var(--rp-accent-mid); }
+.nt-pag-btn.current      { background: var(--rp-accent); color: #fff; border-color: var(--rp-accent); pointer-events: none; }
+.nt-pag-btn.disabled-btn { opacity: .35; pointer-events: none; }
+
+/* ── Empty ── */
+.nt-empty {
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center; 
+    gap: 12px; 
+    padding: 60px 20px;
+    text-align: center;
+}
+.nt-empty-icon {
+    width: 60px; height: 60px; 
+    border-radius: 16px;
+    background: #f4f6fb; 
+    border: 2px dashed var(--rp-border);
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 22px; 
+    color: var(--rp-text-3);
+}
+.nt-empty p     { font-size: 13px; font-weight: 600; color: var(--rp-text-2); margin: 0; }
+.nt-empty small { font-size: 11px; color: var(--rp-text-3); }
+
+/* ══ MEDIA QUERIES RESPONSIVE ══ */
+
+/* Tablettes et petits laptops (max 1024px) */
+@media (max-width: 1024px) {
+    .nt-filters {
+        gap: 10px;
+    }
+    .nt-filter-group select {
+        max-width: 100px;
+    }
+}
+
+/* Mobiles et très petits écrans (max 768px) */
+@media (max-width: 768px) {
+    .t-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .nt-filters {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px;
+    }
+
+    .nt-filter-group {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .nt-filter-group select {
+        max-width: none;
+        flex: 1;
+        text-align: right;
+    }
+
+    .nt-filter-sep {
+        display: none;
+    }
+
+    .nt-filter-right {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 4px;
+    }
+
+    .nt-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .nt-item {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .nt-icon-wrap {
+        align-self: flex-start;
+    }
+
+    .nt-item-top {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .nt-unread-dot {
+        margin-left: 0;
+        position: absolute;
+        top: 14px;
+        right: 14px;
+    }
+    
+    .nt-item {
+        position: relative;
+    }
+
+    .nt-pagination {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .nt-pag-count {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+
+<div class="nt-page">
+
+    <!-- ── Header ── -->
+    <div class="t-header">
+        <div class="nt-title-group">
+            <h1 class="nt-title">Notifications</h1>
+            <span class="nt-count">{{ total_count }} message{{ total_count|pluralize }}</span>
+        </div>
+    </div>
+
+    <!-- ── Filtres ── -->
+    <form method="get" id="nt-filter-form">
+        <div class="nt-filters">
+            <div class="nt-filter-group">
+                <i class="fa-solid fa-tag"></i>
+                <label>Tag</label>
+                <select name="tag" onchange="document.getElementById('nt-filter-form').submit()">
+                    <option value="all" {% if tag_filter == 'all' %}selected{% endif %}>Tous</option>
+                    {% for val, label in tags %}
+                    <option value="{{ val }}" {% if tag_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="nt-filter-sep"></div>
+            <div class="nt-filter-group">
+                <i class="fa-solid fa-circle-dot"></i>
+                <label>Statut</label>
+                <select name="lue" onchange="document.getElementById('nt-filter-form').submit()">
+                    <option value="all"     {% if lue_filter == 'all' %}selected{% endif %}>Tous</option>
+                    <option value="lues"    {% if lue_filter == 'lues' %}selected{% endif %}>Lues</option>
+                    <option value="non_lues"{% if lue_filter == 'non_lues' %}selected{% endif %}>Non lues</option>
+                </select>
+            </div>
+            <div class="nt-filter-right">
+                <button type="submit" class="nt-btn primary">
+                    <i class="fa-solid fa-filter"></i> Filtrer
+                </button>
+                <a href="?" class="nt-btn ghost">
+                    <i class="fa-solid fa-xmark"></i> Réinitialiser
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- ── Liste ── -->
+    <div class="nt-list">
+        <div class="nt-list-head">
+            <div class="nt-list-title">
+                <div class="nt-list-icon"><i class="fa-solid fa-bell"></i></div>
+                Toutes les notifications
+            </div>
+        </div>
+
+        {% for notif in page_obj %}
+        <div class="nt-item {% if not notif.lue %}unread{% endif %}">
+            <div class="nt-icon-wrap icon-{{ notif.tag }}">
+                {% if notif.tag == 'Succes' %}
+                    <i class="fa-solid fa-circle-check"></i>
+                {% elif notif.tag == 'Error' %}
+                    <i class="fa-solid fa-circle-xmark"></i>
+                {% elif notif.tag == 'Warning' %}
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                {% else %}
+                    <i class="fa-solid fa-circle-info"></i>
+                {% endif %}
+            </div>
+            <div class="nt-item-content">
+                <div class="nt-item-top">
+                    <span class="nt-tag tag-{{ notif.tag }}">
+                        <i class="fa-solid fa-circle" style="font-size:6px"></i>
+                        {% if notif.tag == 'Succes' %}Succès
+                        {% elif notif.tag == 'Error' %}Erreur
+                        {% elif notif.tag == 'Warning' %}Avertissement
+                        {% else %}Infos{% endif %}
+                    </span>
+                    <span class="nt-item-date">
+                        <i class="fa-regular fa-clock"></i>
+                        {{ notif.date_creation|timesince }}
+                    </span>
+                </div>
+                <div class="nt-item-msg">{{ notif.content }}</div>
+            </div>
+            {% if not notif.lue %}
+            <div class="nt-unread-dot" title="Non lu"></div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="nt-empty">
+            <div class="nt-empty-icon"><i class="fa-solid fa-bell-slash"></i></div>
+            <p>Aucune notification</p>
+            <small>Rien à afficher pour les filtres sélectionnés</small>
+        </div>
+        {% endfor %}
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="nt-pagination">
+            <span class="nt-pag-count">
+                Affichage <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                sur <strong>{{ total_count }}</strong>
+            </span>
+            <div class="nt-pag-btns">
+                {% if page_obj.has_previous %}
+                <a class="nt-pag-btn"
+                   href="?tag={{ tag_filter }}&lue={{ lue_filter }}&page={{ page_obj.previous_page_number }}">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+                {% else %}
+                <span class="nt-pag-btn disabled-btn"><i class="fa-solid fa-chevron-left"></i></span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                        <span class="nt-pag-btn current">{{ num }}</span>
+                    {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                        <a class="nt-pag-btn"
+                           href="?tag={{ tag_filter }}&lue={{ lue_filter }}&page={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a class="nt-pag-btn"
+                   href="?tag={{ tag_filter }}&lue={{ lue_filter }}&page={{ page_obj.next_page_number }}">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                {% else %}
+                <span class="nt-pag-btn disabled-btn"><i class="fa-solid fa-chevron-right"></i></span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

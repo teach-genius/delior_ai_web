@@ -1,0 +1,202 @@
+{% extends 'utilisateurs/base_user.html' %}
+{% load static %}
+
+{% block title %}Créer un compte{% endblock %}
+
+{% block content %}
+
+<div class="lg-card lg-card-lg">
+
+    <div class="lg-header">
+        <h1 class="lg-title">
+            Créer un <span style="color:var(--lg-gold);">compte</span>
+        </h1>
+        <p class="lg-subtitle">
+            Configurez votre accès à la plateforme.<br>
+            Un administrateur devra approuver votre demande.
+        </p>
+    </div>
+
+    <div class="lg-info-box">
+        <i class="fa-solid fa-circle-info"></i>
+        <p>Votre compte sera <strong>en attente d'approbation</strong> après inscription.
+           Vous recevrez accès dès validation par un administrateur.</p>
+    </div>
+
+    <form action="{% url 'utilisateur:register' %}" method="POST"
+          class="lg-form" id="rg-Form" onsubmit="rgHandleSubmit(event)">
+        {% csrf_token %}
+
+        <div class="lg-grid-2">
+            <div class="lg-field">
+                <label>Nom <span style="color:var(--lg-danger)">*</span></label>
+                <div class="lg-input-wrap">
+                    <input class="lg-input" type="text"
+                           name="last_name" id="rg-last-name"
+                           placeholder="Dupont"
+                           maxlength="40" autocomplete="family-name">
+                </div>
+                <span class="lg-field-error" id="err-last-name">
+                    <i class="fa-solid fa-circle-exclamation"></i> Champ requis
+                </span>
+            </div>
+            <div class="lg-field">
+                <label>Prénom <span style="color:var(--lg-danger)">*</span></label>
+                <div class="lg-input-wrap">
+                    <input class="lg-input" type="text"
+                           name="first_name" id="rg-first-name"
+                           placeholder="Marie"
+                           maxlength="40" autocomplete="given-name">
+                </div>
+                <span class="lg-field-error" id="err-first-name">
+                    <i class="fa-solid fa-circle-exclamation"></i> Champ requis
+                </span>
+            </div>
+        </div>
+
+        <div class="lg-grid-2">
+            <div class="lg-field">
+                <label>Email <span style="color:var(--lg-danger)">*</span></label>
+                <div class="lg-input-wrap">
+                    <input class="lg-input" type="email"
+                           name="email" id="rg-email"
+                           placeholder="marie@exemple.com"
+                           maxlength="150" autocomplete="email">
+                </div>
+                <span class="lg-field-error" id="err-email">
+                    <i class="fa-solid fa-circle-exclamation"></i> Email invalide
+                </span>
+            </div>
+            <div class="lg-field">
+                <label>Poste <span style="color:var(--lg-danger)">*</span></label>
+                <div class="lg-input-wrap">
+                    <input class="lg-input" type="text"
+                           name="poste" id="rg-poste"
+                           placeholder="Ex: Recruteur"
+                           maxlength="60">
+                </div>
+                <span class="lg-field-error" id="err-poste">
+                    <i class="fa-solid fa-circle-exclamation"></i> Champ requis
+                </span>
+            </div>
+        </div>
+
+        <div class="lg-field">
+            <label>Mot de passe <span style="color:var(--lg-danger)">*</span></label>
+            <div class="lg-input-wrap">
+                <input class="lg-input" type="password"
+                       name="password" id="rg-password"
+                       placeholder="Minimum 8 caractères"
+                       maxlength="128"
+                       oninput="rgCheckStrength(this.value)"
+                       style="padding-right:42px;">
+                <i class="fa-solid fa-eye lg-input-icon"
+                   onclick="rgToggle('rg-password', this)"></i>
+            </div>
+            <div class="lg-pwd-strength">
+                <div class="lg-pwd-bar" id="rg-bar-1"></div>
+                <div class="lg-pwd-bar" id="rg-bar-2"></div>
+                <div class="lg-pwd-bar" id="rg-bar-3"></div>
+            </div>
+            <span class="lg-field-error" id="err-password">
+                <i class="fa-solid fa-circle-exclamation"></i> 8 caractères minimum
+            </span>
+        </div>
+
+        <div class="lg-field">
+            <label>Confirmer mot de passe <span style="color:var(--lg-danger)">*</span></label>
+            <div class="lg-input-wrap">
+                <input class="lg-input" type="password"
+                       name="password_confirm" id="rg-password-confirm"
+                       placeholder="Retapez votre mot de passe"
+                       maxlength="128"
+                       style="padding-right:42px;">
+                <i class="fa-solid fa-eye lg-input-icon"
+                   onclick="rgToggle('rg-password-confirm', this)"></i>
+            </div>
+            <span class="lg-field-error" id="err-confirm">
+                <i class="fa-solid fa-circle-exclamation"></i> Les mots de passe ne correspondent pas
+            </span>
+        </div>
+
+        <div class="lg-terms">
+            <input class="lg-checkbox" type="checkbox" id="rg-terms" required>
+            <label for="rg-terms" class="lg-terms-text">
+                J'accepte <a href="#">les conditions d'utilisation</a> et
+                <a href="#">la politique de confidentialité</a>
+            </label>
+        </div>
+
+        <button type="submit" class="lg-submit" id="rg-submit">
+            <i class="fa-solid fa-user-plus"></i>
+            Créer mon compte
+        </button>
+
+    </form>
+
+    <div class="lg-divider"><span>Déjà membre ?</span></div>
+
+    <div class="lg-login-link">
+        <a href="{% url 'utilisateur:login' %}">
+            <i class="fa-solid fa-arrow-left" style="font-size:11px;"></i>
+            Retour à la connexion
+        </a>
+    </div>
+
+</div>
+
+<script>
+function rgToggle(inputId, icon) {
+    const inp = document.getElementById(inputId);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    icon.className = `fa-solid fa-eye${inp.type === 'text' ? '-slash' : ''} lg-input-icon`;
+}
+
+function rgCheckStrength(val) {
+    const bars = ['rg-bar-1','rg-bar-2','rg-bar-3'];
+    bars.forEach(id => document.getElementById(id).className = 'lg-pwd-bar');
+    if (!val) return;
+    let score = 0;
+    if (val.length >= 8)                                score++;
+    if (/[A-Z]/.test(val) && /[a-z]/.test(val))        score++;
+    if (/[0-9]/.test(val) || /[^a-zA-Z0-9]/.test(val)) score++;
+    const cls = ['weak','medium','strong'][score - 1];
+    for (let i = 0; i < score; i++)
+        document.getElementById(bars[i]).classList.add(cls);
+}
+
+function rgHandleSubmit(e) {
+    let ok = true;
+
+    function check(id, errId, fn) {
+        const el  = document.getElementById(id);
+        const err = document.getElementById(errId);
+        const valid = fn(el.value);
+        el.classList.toggle('error', !valid);
+        err.classList.toggle('show', !valid);
+        if (!valid) ok = false;
+    }
+
+    check('rg-last-name',  'err-last-name',  v => v.trim().length > 0);
+    check('rg-first-name', 'err-first-name', v => v.trim().length > 0);
+    check('rg-email',      'err-email',      v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()));
+    check('rg-poste',      'err-poste',      v => v.trim().length > 0);
+    check('rg-password',   'err-password',   v => v.length >= 8);
+
+    const pwd   = document.getElementById('rg-password').value;
+    const conf  = document.getElementById('rg-password-confirm');
+    const valid = pwd === conf.value;
+    conf.classList.toggle('error', !valid);
+    document.getElementById('err-confirm').classList.toggle('show', !valid);
+    if (!valid) ok = false;
+
+    if (!ok) { e.preventDefault(); return; }
+
+    const btn = document.getElementById('rg-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Création en cours…';
+    if (typeof showLoaderUser === 'function') showLoaderUser();
+}
+</script>
+
+{% endblock %}

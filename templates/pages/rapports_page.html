@@ -1,0 +1,1024 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content_main %}
+
+<style>
+.rp-page {
+    --rp-accent:       #3b5bdb;
+    --rp-accent-light: #eef2ff;
+    --rp-accent-mid:   #c5d0f7;
+    --rp-border:       #e4e9f2;
+    --rp-border-2:     #d0d8ea;
+    --rp-text-1:       #0d1117;
+    --rp-text-2:       #4a5568;
+    --rp-text-3:       #8a94a6;
+    --rp-surface:      #ffffff;
+    --rp-radius:       16px;
+    --rp-radius-sm:    10px;
+    --rp-shadow-sm:    0 1px 3px rgba(0,0,0,.06);
+    --rp-shadow-lg:    0 12px 40px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+    --rp-font-head:    'Syne', sans-serif;
+}
+
+.rp-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.rp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.rp-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rp-title {
+    font-family: var(--rp-font-head);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--rp-text-1);
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.rp-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--rp-accent);
+    background: var(--rp-accent-light);
+    border: 1px solid var(--rp-accent-mid);
+    border-radius: 20px;
+    padding: 3px 11px;
+}
+
+.rp-search-form { display: flex; width: 100%; max-width: 300px; }
+
+.rp-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--rp-surface);
+    border: 1.5px solid var(--rp-border);
+    border-radius: 30px;
+    padding: 0 16px;
+    height: 38px;
+    width: 100%;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.rp-search:focus-within {
+    border-color: var(--rp-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+}
+
+.rp-search i    { color: var(--rp-text-3); font-size: 12px; flex-shrink: 0; }
+
+.rp-search input {
+    border: none; background: transparent; outline: none;
+    font-size: 13px; color: var(--rp-text-1);
+    width: 100%; font-family: inherit;
+}
+
+.rp-search input::placeholder { color: var(--rp-text-3); }
+
+.rp-filters {
+    background: var(--rp-surface);
+    border: 1.5px solid var(--rp-border);
+    border-radius: var(--rp-radius);
+    padding: 16px 18px;
+    box-shadow: var(--rp-shadow-sm);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.rp-filters-inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.rp-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.f-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; }
+
+.f-label {
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--rp-text-3);
+}
+
+/* ── Combobox ── */
+.f-combo-wrap { position: relative; width: 100%; }
+
+.f-combo-input {
+    width: 100%; height: 34px;
+    border: 1.5px solid var(--rp-border);
+    border-radius: var(--rp-radius-sm);
+    padding: 0 28px 0 10px;
+    font-size: 12px; font-family: inherit; font-weight: 500;
+    color: var(--rp-text-1); background-color: #f8fafd;
+    outline: none; cursor: pointer; box-sizing: border-box;
+    transition: border-color .2s, box-shadow .2s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.f-combo-input:focus {
+    border-color: var(--rp-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.08);
+    background-color: #fff;
+    cursor: text;
+}
+
+.f-combo-input.is-active {
+    border-color: var(--rp-accent);
+    background-color: var(--rp-accent-light);
+    color: var(--rp-accent);
+    font-weight: 600;
+}
+
+.f-combo-arrow {
+    position: absolute; right: 9px; top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; color: var(--rp-text-3);
+    font-size: 10px; transition: transform .2s;
+}
+
+.f-combo-wrap.open .f-combo-arrow { transform: translateY(-50%) rotate(180deg); }
+
+.f-combo-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px); left: 0;
+    width: 100%; min-width: 160px;
+    background: var(--rp-surface);
+    border: 1.5px solid var(--rp-border);
+    border-radius: var(--rp-radius-sm);
+    box-shadow: var(--rp-shadow-lg);
+    z-index: 999;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.f-combo-wrap.open .f-combo-dropdown { display: block; }
+
+.f-combo-option {
+    padding: 7px 10px;
+    font-size: 12px; font-weight: 500;
+    color: var(--rp-text-2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .1s, color .1s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.f-combo-option:hover,
+.f-combo-option.highlighted {
+    background: var(--rp-accent-light);
+    color: var(--rp-accent);
+}
+
+.f-combo-option.selected {
+    background: var(--rp-accent-light);
+    color: var(--rp-accent);
+    font-weight: 700;
+}
+
+.f-combo-option.f-combo-empty {
+    color: var(--rp-text-3);
+    font-style: italic;
+    cursor: default;
+}
+
+.f-combo-option.f-combo-empty:hover { background: transparent; color: var(--rp-text-3); }
+
+.f-combo-hidden { display: none; }
+
+.rp-filter-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; width: 100%; }
+@media (min-width: 768px) {
+    .rp-filter-actions { width: auto; }
+}
+
+.rp-btn-filter {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 7px 16px;
+    border-radius: var(--rp-radius-sm);
+    font-size: 12px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: all .15s;
+    text-decoration: none; white-space: nowrap;
+    width: 100%;
+}
+@media (min-width: 768px) {
+    .rp-btn-filter { width: auto; }
+}
+
+.rp-btn-filter.primary { background: var(--rp-accent); color: #fff; border: none; }
+.rp-btn-filter.primary:hover { background: #2f4ac7; box-shadow: 0 4px 12px rgba(59,91,219,.3); }
+.rp-btn-filter.ghost { background: #f8fafd; color: var(--rp-text-2); border: 1.5px solid var(--rp-border); }
+.rp-btn-filter.ghost:hover { background: var(--rp-accent-light); border-color: var(--rp-accent-mid); color: var(--rp-accent); }
+
+.rp-active-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--rp-border);
+    width: 100%;
+}
+
+.rp-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--rp-accent-light); border: 1px solid var(--rp-accent-mid);
+    color: var(--rp-accent); border-radius: 20px;
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+}
+
+/* ── Grille ── */
+.rp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    width: 100%;
+}
+
+.rp-card {
+    background: var(--rp-surface);
+    border: 1.5px solid var(--rp-border);
+    border-radius: var(--rp-radius);
+    box-shadow: var(--rp-shadow-sm);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow .25s, transform .25s, border-color .25s;
+    animation: rp-fadeUp .3s ease both;
+    min-width: 0; /* Important pour empêcher l'overflow du contenu */
+}
+
+.rp-card:hover {
+    box-shadow: var(--rp-shadow-lg);
+    transform: translateY(-3px);
+    border-color: var(--rp-border-2);
+}
+
+@keyframes rp-fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.rp-card:nth-child(1){animation-delay:.04s}
+.rp-card:nth-child(2){animation-delay:.08s}
+.rp-card:nth-child(3){animation-delay:.12s}
+.rp-card:nth-child(4){animation-delay:.16s}
+.rp-card:nth-child(5){animation-delay:.20s}
+.rp-card:nth-child(6){animation-delay:.24s}
+
+.rp-band { height: 5px; width: 100%; display: block; flex-shrink: 0; }
+.band-en_attente { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.band-en_cours   { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+.band-termine    { background: linear-gradient(90deg, #34d399, #10b981); }
+
+.rp-card-body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; flex: 1; }
+
+.rp-identity-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.rp-identity     { display: flex; align-items: flex-start; gap: 11px; flex: 1; min-width: 0; }
+
+.rp-avatar {
+    width: 46px; height: 46px; border-radius: 11px;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border: 1.5px solid var(--rp-accent-mid);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; overflow: hidden;
+}
+
+.rp-avatar img { width: 100%; height: 100%; object-fit: contain; }
+.rp-identity-text { flex: 1; min-width: 0; }
+
+.rp-name {
+    font-size: 13.5px; font-weight: 700; color: var(--rp-text-1);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.rp-titre {
+    font-size: 11px; color: var(--rp-text-3); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.rp-location {
+    font-size: 10.5px; color: var(--rp-text-3);
+    margin-top: 4px; display: flex; align-items: center; gap: 4px;
+    flex-wrap: wrap;
+}
+
+.rp-location i { color: var(--rp-accent); font-size: 9px; }
+.rp-location-sep { color: var(--rp-border-2); font-size: 10px; }
+
+.rp-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 10.5px; font-weight: 700;
+    white-space: nowrap; flex-shrink: 0;
+    border: 1.5px solid; margin-top: 2px;
+}
+
+.rp-badge::before {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; flex-shrink: 0;
+}
+
+.rp-badge.st-en_attente { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.rp-badge.st-en_attente::before { background: #f59e0b; }
+.rp-badge.st-en_cours   { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.rp-badge.st-en_cours::before   { background: #3b82f6; }
+.rp-badge.st-termine    { background: #f0fdf4; border-color: #6ee7b7; color: #065f46; }
+.rp-badge.st-termine::before    { background: #10b981; }
+
+/* ── Pills meta ── */
+.rp-meta-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.rp-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 20px; border: 1px solid; white-space: nowrap;
+}
+
+.rp-pill.pill-niveau  { background: #fdf4ff; border-color: #e9d5ff; color: #7c3aed; }
+.rp-pill.pill-contrat { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+.rp-pill.pill-domaine { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+.rp-pill.pill-secteur { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+
+/* ── Stats ── */
+.rp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+.rp-stat {
+    background: #f8fafd; border: 1px solid var(--rp-border);
+    border-radius: 10px; padding: 8px 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+}
+
+.rp-stat-num {
+    font-family: var(--rp-font-head); font-size: 18px;
+    font-weight: 800; color: var(--rp-text-1); line-height: 1;
+}
+
+.rp-stat-label {
+    font-size: 8.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--rp-text-3);
+}
+
+.rp-card-divider { height: 1px; background: var(--rp-border); margin: 0 -16px; }
+
+.rp-skills { display: flex; flex-wrap: wrap; gap: 5px; max-height: 60px; overflow-y: auto; }
+.rp-skills::-webkit-scrollbar { width: 4px; }
+.rp-skills::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+.rp-skill {
+    font-size: 10.5px; padding: 3px 9px;
+    border: 1px solid var(--rp-border); border-radius: 20px;
+    background: #f8fafd; color: var(--rp-text-2);
+    font-weight: 500; white-space: nowrap;
+    transition: background .15s, border-color .15s, color .15s;
+}
+
+.rp-skill:hover { background: var(--rp-accent-light); border-color: var(--rp-accent-mid); color: var(--rp-accent); }
+
+/* ── Actions ── */
+.rp-card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-top: 2px; }
+
+.rp-action-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 5px; padding: 7px 6px; border-radius: 8px;
+    font-size: 11.5px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: all .15s;
+    border: 1.5px solid var(--rp-border);
+    background: #f8fafd; color: var(--rp-text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rp-action-btn i { font-size: 11px; flex-shrink: 0; }
+.rp-action-btn:hover { transform: translateY(-1px); }
+.rp-action-btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+.rp-action-btn.act-rapport:hover { background:#f3f0ff; border-color:#c4b5fd; color:#7c3aed; box-shadow:0 3px 8px rgba(124,58,237,.15); }
+.rp-action-btn.act-cv:hover      { background:#ecfdf5; border-color:#6ee7b7; color:#059669; box-shadow:0 3px 8px rgba(5,150,105,.15); }
+.rp-action-btn.act-export:hover  { background:var(--rp-accent-light); border-color:var(--rp-accent-mid); color:var(--rp-accent); box-shadow:0 3px 8px rgba(59,91,219,.15); }
+
+/* ── Empty ── */
+.rp-empty {
+    grid-column: 1/-1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; padding: 60px 20px;
+    text-align: center;
+}
+
+.rp-empty-icon {
+    width: 60px; height: 60px; border-radius: 16px;
+    background: #f4f6fb; border: 2px dashed var(--rp-border-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--rp-text-3);
+}
+
+.rp-empty p     { font-size: 13px; font-weight: 600; color: var(--rp-text-2); }
+.rp-empty small { font-size: 11px; color: var(--rp-text-3); }
+
+/* ── Paginator ── */
+.rp-pagination {
+    display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+    margin-top: 10px; padding-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.rp-pagination a,
+.rp-pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 36px; min-width: 36px; padding: 0 10px;
+    border-radius: 10px; font-size: 12.5px; font-weight: 600;
+    text-decoration: none; border: 1.5px solid var(--rp-border);
+    color: var(--rp-text-3); background: var(--rp-surface);
+    transition: all .15s;
+}
+
+.rp-pagination a:hover {
+    background: var(--rp-accent-light);
+    color: var(--rp-accent);
+    border-color: var(--rp-accent-mid);
+}
+
+.rp-pagination .rp-page-current {
+    background: var(--rp-accent); color: #fff; border-color: var(--rp-accent);
+}
+
+.rp-pagination .rp-page-info {
+    font-size: 11px; color: var(--rp-text-3);
+    border: none; background: transparent; padding: 0 4px;
+    min-width: auto; height: auto;
+}
+
+/* ── RESPONSIVE MEDIA QUERIES ── */
+@media (max-width: 1024px) {
+    .rp-filters-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .rp-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .rp-search-form {
+        max-width: 100%;
+    }
+
+    .rp-filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rp-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rp-card-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .rp-action-btn {
+        justify-content: flex-start;
+        padding-left: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .rp-title {
+        font-size: 20px;
+    }
+    
+    .rp-stats {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    
+    .rp-stat {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 6px 10px;
+    }
+    
+    .rp-stat-label {
+        margin-left: 8px;
+    }
+}
+</style>
+
+<div class="rp-page">
+
+    <!-- ── Header ── -->
+    <div class="rp-header">
+        <div class="rp-title-group">
+            <h1 class="rp-title">Rapports</h1>
+            <span class="rp-count">{{ total_count }} candidat{{ total_count|pluralize }}</span>
+        </div>
+
+        <form method="get" id="rp-search-form" class="rp-search-form">
+            {% if f_ville     != 'all' %}<input type="hidden" name="ville"     value="{{ f_ville }}">{% endif %}
+            {% if f_pays      != 'all' %}<input type="hidden" name="pays"      value="{{ f_pays }}">{% endif %}
+            {% if f_statut    != 'all' %}<input type="hidden" name="statut"    value="{{ f_statut }}">{% endif %}
+            {% if f_niveau    != 'all' %}<input type="hidden" name="niveau"    value="{{ f_niveau }}">{% endif %}
+            {% if f_langue    != 'all' %}<input type="hidden" name="langue"    value="{{ f_langue }}">{% endif %}
+            {% if f_domaine   != 'all' %}<input type="hidden" name="domaine"   value="{{ f_domaine }}">{% endif %}
+            {% if f_secteur   != 'all' %}<input type="hidden" name="secteur"   value="{{ f_secteur }}">{% endif %}
+            {% if f_contrat   != 'all' %}<input type="hidden" name="contrat"   value="{{ f_contrat }}">{% endif %}
+            <div class="rp-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" name="q" value="{{ q_search }}"
+                       placeholder="Rechercher un candidat…"
+                       autocomplete="off"
+                       onchange="document.getElementById('rp-search-form').submit()">
+            </div>
+        </form>
+    </div>
+
+    <!-- ── Filtres ── -->
+    <form method="get" id="rp-filter-form">
+        {% if q_search %}<input type="hidden" name="q" value="{{ q_search }}">{% endif %}
+
+        <div class="rp-filters">
+            <div class="rp-filters-inner">
+                <div class="rp-filters-grid">
+
+                    <!-- Ville -->
+                    <div class="f-group">
+                        <label class="f-label">Ville</label>
+                        <div class="f-combo-wrap" data-value="{{ f_ville }}">
+                            <input type="text" class="f-combo-input {% if f_ville != 'all' %}is-active{% endif %}" placeholder="Toutes" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Toutes</div>
+                                {% for v in all_villes %}<div class="f-combo-option" data-value="{{ v }}">{{ v }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="ville" class="f-combo-hidden" value="{{ f_ville }}">
+                        </div>
+                    </div>
+
+                    <!-- Pays -->
+                    <div class="f-group">
+                        <label class="f-label">Pays</label>
+                        <div class="f-combo-wrap" data-value="{{ f_pays }}">
+                            <input type="text" class="f-combo-input {% if f_pays != 'all' %}is-active{% endif %}" placeholder="Tous" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Tous</div>
+                                {% for p in all_pays %}<div class="f-combo-option" data-value="{{ p }}">{{ p }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="pays" class="f-combo-hidden" value="{{ f_pays }}">
+                        </div>
+                    </div>
+
+                    <!-- Statut -->
+                    <div class="f-group">
+                        <label class="f-label">Statut</label>
+                        <div class="f-combo-wrap" data-value="{{ f_statut }}">
+                            <input type="text" class="f-combo-input {% if f_statut != 'all' %}is-active{% endif %}" placeholder="Tous" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Tous</div>
+                                {% for val, label in statuts %}<div class="f-combo-option" data-value="{{ val }}">{{ label }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="statut" class="f-combo-hidden" value="{{ f_statut }}">
+                        </div>
+                    </div>
+
+                    <!-- Niveau -->
+                    <div class="f-group">
+                        <label class="f-label">Niveau</label>
+                        <div class="f-combo-wrap" data-value="{{ f_niveau }}">
+                            <input type="text" class="f-combo-input {% if f_niveau != 'all' %}is-active{% endif %}" placeholder="Tous" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Tous</div>
+                                {% for n in all_niveaux %}<div class="f-combo-option" data-value="{{ n }}">{{ n }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="niveau" class="f-combo-hidden" value="{{ f_niveau }}">
+                        </div>
+                    </div>
+
+                    <!-- Langue -->
+                    <div class="f-group">
+                        <label class="f-label">Langue</label>
+                        <div class="f-combo-wrap" data-value="{{ f_langue }}">
+                            <input type="text" class="f-combo-input {% if f_langue != 'all' %}is-active{% endif %}" placeholder="Toutes" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Toutes</div>
+                                {% for l in all_langues %}<div class="f-combo-option" data-value="{{ l }}">{{ l }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="langue" class="f-combo-hidden" value="{{ f_langue }}">
+                        </div>
+                    </div>
+
+                    <!-- Domaine -->
+                    <div class="f-group">
+                        <label class="f-label">Domaine</label>
+                        <div class="f-combo-wrap" data-value="{{ f_domaine }}">
+                            <input type="text" class="f-combo-input {% if f_domaine != 'all' %}is-active{% endif %}" placeholder="Tous" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Tous</div>
+                                {% for d in all_domaines %}<div class="f-combo-option" data-value="{{ d }}">{{ d }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="domaine" class="f-combo-hidden" value="{{ f_domaine }}">
+                        </div>
+                    </div>
+
+                    <!-- Secteur -->
+                    <div class="f-group">
+                        <label class="f-label">Secteur</label>
+                        <div class="f-combo-wrap" data-value="{{ f_secteur }}">
+                            <input type="text" class="f-combo-input {% if f_secteur != 'all' %}is-active{% endif %}" placeholder="Tous" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Tous</div>
+                                {% for s in all_secteurs %}<div class="f-combo-option" data-value="{{ s }}">{{ s }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="secteur" class="f-combo-hidden" value="{{ f_secteur }}">
+                        </div>
+                    </div>
+
+                    <!-- Contrat -->
+                    <div class="f-group">
+                        <label class="f-label">Contrat</label>
+                        <div class="f-combo-wrap" data-value="{{ f_contrat }}">
+                            <input type="text" class="f-combo-input {% if f_contrat != 'all' %}is-active{% endif %}" placeholder="Tous" autocomplete="off">
+                            <i class="fa-solid fa-chevron-down f-combo-arrow"></i>
+                            <div class="f-combo-dropdown">
+                                <div class="f-combo-option" data-value="all">Tous</div>
+                                {% for c in all_contrats %}<div class="f-combo-option" data-value="{{ c }}">{{ c }}</div>{% endfor %}
+                            </div>
+                            <input type="hidden" name="contrat" class="f-combo-hidden" value="{{ f_contrat }}">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="rp-filter-actions">
+                    <button type="submit" class="rp-btn-filter primary">
+                        <i class="fa-solid fa-filter"></i> Filtrer
+                    </button>
+                    <a href="?" class="rp-btn-filter ghost">
+                        <i class="fa-solid fa-xmark"></i> Réinitialiser
+                    </a>
+                </div>
+            </div>
+
+            <!-- ── Tags filtres actifs ── -->
+            {% if has_filters %}
+            <div class="rp-active-tags">
+                {% if q_search %}
+                <span class="rp-tag"><i class="fa-solid fa-magnifying-glass"></i> "{{ q_search }}"</span>
+                {% endif %}
+                {% if f_ville != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-location-dot"></i> {{ f_ville }}</span>
+                {% endif %}
+                {% if f_pays != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-earth-africa"></i> {{ f_pays }}</span>
+                {% endif %}
+                {% if f_statut != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-circle-dot"></i>
+                    {% for val, label in statuts %}{% if val == f_statut %}{{ label }}{% endif %}{% endfor %}
+                </span>
+                {% endif %}
+                {% if f_niveau != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-signal"></i> {{ f_niveau }}</span>
+                {% endif %}
+                {% if f_competence != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-code"></i> {{ f_competence }}</span>
+                {% endif %}
+                {% if f_langue != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-language"></i> {{ f_langue }}</span>
+                {% endif %}
+                {% if f_domaine != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-layer-group"></i> {{ f_domaine }}</span>
+                {% endif %}
+                {% if f_secteur != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-briefcase"></i> {{ f_secteur }}</span>
+                {% endif %}
+                {% if f_contrat != 'all' %}
+                <span class="rp-tag"><i class="fa-solid fa-file-contract"></i> {{ f_contrat }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+    </form>
+
+    <!-- ── Grille candidats ── -->
+    <div class="rp-grid">
+        {% for candidat in page_obj %}
+        {% with ds=candidat.donnees_structurees %}
+
+        <div class="rp-card">
+            <div class="rp-band band-{{ candidat.etat_analyse }}"></div>
+
+            <div class="rp-card-body">
+
+                <!-- Identité -->
+                <div class="rp-identity-row">
+                    <div class="rp-identity">
+                        <div class="rp-avatar">
+                            <img src="{% static 'imgs/symbole.png' %}" alt="">
+                        </div>
+                        <div class="rp-identity-text">
+                            <div class="rp-name">{{ candidat.nom_complet }}</div>
+                            <div class="rp-titre">{{ candidat.titre_professionnel|slice:":42" }}</div>
+                            <div class="rp-location">
+                                {% if candidat.ville %}
+                                <i class="fa-solid fa-location-dot"></i>
+                                {{ candidat.ville }}
+                                {% endif %}
+                                {% if candidat.ville and candidat.pays %}
+                                <span class="rp-location-sep">·</span>
+                                {% endif %}
+                                {% if candidat.pays %}
+                                {{ candidat.pays }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rp-badge st-{{ candidat.etat_analyse }}">
+                        {{ candidat.get_etat_analyse_display }}
+                    </div>
+                </div>
+
+                <!-- Pills meta -->
+                <div class="rp-meta-pills">
+                    {% if candidat.niveau %}
+                    <span class="rp-pill pill-niveau">
+                        <i class="fa-solid fa-signal" style="font-size:8px;"></i> {{ candidat.niveau }}
+                    </span>
+                    {% endif %}
+                    {% if candidat.contrat_souhaite %}
+                    <span class="rp-pill pill-contrat">
+                        <i class="fa-solid fa-file-contract" style="font-size:8px;"></i> {{ candidat.contrat_souhaite }}
+                    </span>
+                    {% endif %}
+                    {% if candidat.domaine %}
+                    <span class="rp-pill pill-domaine">
+                        <i class="fa-solid fa-layer-group" style="font-size:8px;"></i> {{ candidat.domaine|slice:":22" }}
+                    </span>
+                    {% endif %}
+                    {% if candidat.secteur %}
+                    <span class="rp-pill pill-secteur">
+                        <i class="fa-solid fa-briefcase" style="font-size:8px;"></i> {{ candidat.secteur|slice:":22" }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Stats -->
+                <div class="rp-stats">
+                    <div class="rp-stat">
+                        <div class="rp-stat-num">
+                            {% if ds.certifications %}{{ ds.certifications|length }}{% else %}0{% endif %}
+                        </div>
+                        <div class="rp-stat-label">Certifs</div>
+                    </div>
+                    <div class="rp-stat">
+                        <div class="rp-stat-num">
+                            {% if ds.projets %}{{ ds.projets|length }}{% else %}0{% endif %}
+                        </div>
+                        <div class="rp-stat-label">Projets</div>
+                    </div>
+                    <div class="rp-stat">
+                        <div class="rp-stat-num">
+                            {% if ds.langues %}{{ ds.langues|length }}{% else %}0{% endif %}
+                        </div>
+                        <div class="rp-stat-label">Langues</div>
+                    </div>
+                </div>
+
+                <div class="rp-card-divider"></div>
+
+                <!-- Compétences -->
+                <div class="rp-skills">
+                    {% for comp in candidat.competences.all %}
+                    <span class="rp-skill">{{ comp.nom }}</span>
+                    {% empty %}
+                    <span style="font-size:11px;color:var(--rp-text-3);font-style:italic;">Aucune compétence</span>
+                    {% endfor %}
+                </div>
+
+                <!-- Actions -->
+                <div class="rp-card-actions">
+                    <button class="rp-action-btn act-rapport"
+                            {% if candidat.etat_analyse == 'en_attente' %}disabled{% endif %}
+                            data-identifiant="{{ candidat.candidat_id }}"
+                            onclick="VoirRapport(this)">
+                        <i class="fa-solid fa-chart-line"></i> Rapport
+                    </button>
+                    <button class="rp-action-btn act-cv"
+                            data-url="{{ candidat.fichier_pdf_origine.url }}"
+                            onclick="openViewDoc(this)">
+                        <i class="fa-solid fa-file-pdf"></i> CV
+                    </button>
+                    <button class="rp-action-btn act-export"
+                            {% if candidat.etat_analyse == 'en_attente' %}disabled{% endif %}
+                            data-identifiant="{{ candidat.candidat_id }}"
+                            onclick="ExportRapport(this)">
+                        <i class="fa-solid fa-download"></i> Export
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        {% endwith %}
+        {% empty %}
+        <div class="rp-empty">
+            <div class="rp-empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <p>Aucun candidat trouvé</p>
+            <small>Modifiez ou réinitialisez vos filtres</small>
+            {% if has_filters %}
+            <a href="?" class="rp-btn-filter ghost" style="margin-top:4px;">
+                <i class="fa-solid fa-xmark"></i> Réinitialiser
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ── Paginator ── -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    {% with p=page_obj %}
+    <div class="rp-pagination">
+
+        {% if p.has_previous %}
+        <a href="?{% if q_search %}q={{ q_search }}&{% endif %}{% if f_ville != 'all' %}ville={{ f_ville }}&{% endif %}{% if f_pays != 'all' %}pays={{ f_pays }}&{% endif %}{% if f_statut != 'all' %}statut={{ f_statut }}&{% endif %}{% if f_niveau != 'all' %}niveau={{ f_niveau }}&{% endif %}{% if f_competence != 'all' %}competence={{ f_competence }}&{% endif %}{% if f_langue != 'all' %}langue={{ f_langue }}&{% endif %}{% if f_domaine != 'all' %}domaine={{ f_domaine }}&{% endif %}{% if f_secteur != 'all' %}secteur={{ f_secteur }}&{% endif %}{% if f_contrat != 'all' %}contrat={{ f_contrat }}&{% endif %}page={{ p.previous_page_number }}">
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        {% endif %}
+
+        {% for num in p.paginator.page_range %}
+            {% if num == p.number %}
+                <span class="rp-page-current">{{ num }}</span>
+            {% elif num >= p.number|add:"-2" and num <= p.number|add:"2" %}
+                <a href="?{% if q_search %}q={{ q_search }}&{% endif %}{% if f_ville != 'all' %}ville={{ f_ville }}&{% endif %}{% if f_pays != 'all' %}pays={{ f_pays }}&{% endif %}{% if f_statut != 'all' %}statut={{ f_statut }}&{% endif %}{% if f_niveau != 'all' %}niveau={{ f_niveau }}&{% endif %}{% if f_competence != 'all' %}competence={{ f_competence }}&{% endif %}{% if f_langue != 'all' %}langue={{ f_langue }}&{% endif %}{% if f_domaine != 'all' %}domaine={{ f_domaine }}&{% endif %}{% if f_secteur != 'all' %}secteur={{ f_secteur }}&{% endif %}{% if f_contrat != 'all' %}contrat={{ f_contrat }}&{% endif %}page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if p.has_next %}
+        <a href="?{% if q_search %}q={{ q_search }}&{% endif %}{% if f_ville != 'all' %}ville={{ f_ville }}&{% endif %}{% if f_pays != 'all' %}pays={{ f_pays }}&{% endif %}{% if f_statut != 'all' %}statut={{ f_statut }}&{% endif %}{% if f_niveau != 'all' %}niveau={{ f_niveau }}&{% endif %}{% if f_competence != 'all' %}competence={{ f_competence }}&{% endif %}{% if f_langue != 'all' %}langue={{ f_langue }}&{% endif %}{% if f_domaine != 'all' %}domaine={{ f_domaine }}&{% endif %}{% if f_secteur != 'all' %}secteur={{ f_secteur }}&{% endif %}{% if f_contrat != 'all' %}contrat={{ f_contrat }}&{% endif %}page={{ p.next_page_number }}">
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+
+        <span class="rp-page-info">Page {{ p.number }} / {{ p.paginator.num_pages }}</span>
+    </div>
+    {% endwith %}
+    {% endif %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.f-combo-wrap').forEach(function (wrap) {
+        const input      = wrap.querySelector('.f-combo-input');
+        const dropdown   = wrap.querySelector('.f-combo-dropdown');
+        const hidden     = wrap.querySelector('.f-combo-hidden');
+        const allOptions = Array.from(wrap.querySelectorAll('.f-combo-option'));
+        let highlighted  = -1;
+
+        const currentVal = wrap.dataset.value || 'all';
+        const currentOpt = allOptions.find(o => o.dataset.value === currentVal);
+        if (currentOpt && currentVal !== 'all') {
+            input.value = currentOpt.textContent.trim();
+        }
+
+        function markSelected(val) {
+            allOptions.forEach(o => o.classList.toggle('selected', o.dataset.value === val));
+        }
+        markSelected(currentVal);
+
+        function openDropdown() {
+            wrap.classList.add('open');
+            filterOptions('');
+            input.select();
+            highlighted = -1;
+        }
+
+        function closeDropdown() {
+            wrap.classList.remove('open');
+            highlighted = -1;
+            const val = hidden.value || 'all';
+            const opt = allOptions.find(o => o.dataset.value === val);
+            input.value = (val === 'all') ? '' : (opt ? opt.textContent.trim() : '');
+        }
+
+        function filterOptions(query) {
+            const q = query.toLowerCase().trim();
+            let visibleCount = 0;
+            allOptions.forEach(function (opt) {
+                const match = q === '' || opt.textContent.toLowerCase().includes(q);
+                opt.style.display = match ? '' : 'none';
+                if (match) visibleCount++;
+            });
+            let emptyMsg = dropdown.querySelector('.f-combo-empty');
+            if (visibleCount === 0) {
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'f-combo-option f-combo-empty';
+                    emptyMsg.textContent = 'Aucun résultat';
+                    dropdown.appendChild(emptyMsg);
+                }
+                emptyMsg.style.display = '';
+            } else if (emptyMsg) {
+                emptyMsg.style.display = 'none';
+            }
+            highlighted = -1;
+        }
+
+        function selectOption(opt) {
+            const val   = opt.dataset.value;
+            const label = opt.textContent.trim();
+            hidden.value = val;
+            input.value  = val === 'all' ? '' : label;
+            input.classList.toggle('is-active', val !== 'all');
+            markSelected(val);
+            closeDropdown();
+        }
+
+        input.addEventListener('click', function () {
+            wrap.classList.contains('open') ? closeDropdown() : openDropdown();
+        });
+
+        input.addEventListener('input', function () {
+            if (!wrap.classList.contains('open')) wrap.classList.add('open');
+            filterOptions(this.value);
+            hidden.value = 'all';
+            input.classList.remove('is-active');
+        });
+
+        input.addEventListener('keydown', function (e) {
+            const visible = allOptions.filter(o => o.style.display !== 'none' && !o.classList.contains('f-combo-empty'));
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlighted = Math.min(highlighted + 1, visible.length - 1);
+                updateHighlight(visible);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlighted = Math.max(highlighted - 1, 0);
+                updateHighlight(visible);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlighted >= 0 && visible[highlighted]) {
+                    selectOption(visible[highlighted]);
+                } else {
+                    document.getElementById('rp-filter-form').submit();
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+                input.blur();
+            }
+        });
+
+        function updateHighlight(visible) {
+            allOptions.forEach(o => o.classList.remove('highlighted'));
+            if (visible[highlighted]) {
+                visible[highlighted].classList.add('highlighted');
+                visible[highlighted].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        allOptions.forEach(function (opt) {
+            opt.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                selectOption(opt);
+            });
+        });
+
+        document.addEventListener('mousedown', function (e) {
+            if (!wrap.contains(e.target)) closeDropdown();
+        });
+    });
+});
+</script>
+
+{% endblock %}

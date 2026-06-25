@@ -1,0 +1,1530 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Documents CV{% endblock %}
+
+{% block content_main %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+.dc-page {
+    --dc-accent:       #3b5bdb;
+    --dc-accent-light: #eef2ff;
+    --dc-accent-mid:   #c5d0f7;
+    --dc-border:       #e4e9f2;
+    --dc-border-2:     #d0d8ea;
+    --dc-text-1:       #0d1117;
+    --dc-text-2:       #4a5568;
+    --dc-text-3:       #8a94a6;
+    --dc-surface:      #ffffff;
+    --dc-radius:       16px;
+    --dc-radius-sm:    10px;
+    --dc-shadow-sm:    0 1px 3px rgba(0,0,0,.06);
+    --dc-shadow-lg:    0 12px 40px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+    --dc-font-head:    'Syne', sans-serif;
+    --dc-danger:       #f43f5e;
+}
+
+.dc-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+.dc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.dc-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dc-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #0d1117;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin: 0; padding: 0;
+    border: none; background: none;
+}
+
+.dc-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dc-accent);
+    background: var(--dc-accent-light);
+    border: 1px solid var(--dc-accent-mid);
+    border-radius: 20px;
+    padding: 3px 11px;
+}
+
+.dc-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dc-toolbar {
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 16px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.dc-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 30px;
+    padding: 0 16px;
+    height: 38px;
+    width: 260px;
+    transition: border-color .2s, box-shadow .2s;
+    flex-shrink: 0;
+}
+
+.dc-search:focus-within {
+    border-color: var(--dc-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+}
+
+.dc-search i    { color: #8a94a6; font-size: 12px; flex-shrink: 0; }
+
+.dc-search input {
+    border: none; background: transparent; outline: none;
+    font-size: 13px; color: #0d1117; width: 100%;
+    font-family: inherit;
+}
+
+.dc-search input::placeholder { color: #8a94a6; }
+
+.dc-filter-sep {
+    width: 1px;
+    height: 22px;
+    background: #e4e9f2;
+    flex-shrink: 0;
+}
+
+.dc-combo-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.dc-combo-icon {
+    position: absolute;
+    left: 13px;
+    color: #8a94a6;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.dc-combo-input {
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 30px;
+    padding: 0 34px 0 32px;
+    height: 38px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #0d1117;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    min-width: 160px;
+    box-sizing: border-box;
+}
+
+.dc-combo-input:focus {
+    border-color: var(--dc-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+    cursor: text;
+}
+
+.dc-combo-input.active {
+    border-color: var(--dc-accent);
+    background: var(--dc-accent-light);
+    color: var(--dc-accent);
+    font-weight: 600;
+}
+
+.dc-combo-caret {
+    position: absolute;
+    right: 13px;
+    color: #8a94a6;
+    font-size: 9px;
+    pointer-events: none;
+    transition: transform .2s;
+}
+
+.dc-combo-wrap.open .dc-combo-caret { transform: rotate(180deg); }
+
+.dc-combo-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 100%;
+    width: max-content;
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+    z-index: 9999;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.dc-combo-wrap.open .dc-combo-dropdown { display: block; }
+
+.dc-combo-option {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4a5568;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .1s, color .1s;
+    white-space: nowrap;
+}
+
+.dc-combo-option:hover,
+.dc-combo-option.highlighted {
+    background: #eef2ff;
+    color: var(--dc-accent);
+}
+
+.dc-combo-option.selected {
+    background: #eef2ff;
+    color: var(--dc-accent);
+    font-weight: 700;
+}
+
+.dc-combo-option.dc-combo-empty {
+    color: #8a94a6;
+    font-style: italic;
+    cursor: default;
+}
+
+.dc-combo-option.dc-combo-empty:hover {
+    background: transparent;
+    color: #8a94a6;
+}
+
+.dc-combo-hidden { display: none; }
+
+.dc-btn-clear-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 13px;
+    height: 34px;
+    border-radius: 30px;
+    font-size: 11.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1.5px solid #fda4af;
+    background: #fff0f3;
+    color: #f43f5e;
+    transition: all .15s;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.dc-btn-clear-filters:hover {
+    background: #ffe4e9;
+    border-color: #f43f5e;
+    color: #f43f5e;
+}
+
+.dc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    white-space: nowrap;
+    height: 36px;
+    border: none;
+}
+
+.dc-btn:active { transform: scale(0.97); }
+
+.dc-btn-primary { background: #3b5bdb; color: #fff; }
+.dc-btn-primary:hover {
+    background: #2f4ac7;
+    box-shadow: 0 4px 14px rgba(59,91,219,.35);
+    transform: translateY(-1px);
+}
+
+.dc-btn-ghost { background: #f8fafd; color: #4a5568; border: 1.5px solid #e4e9f2; }
+.dc-btn-ghost:hover {
+    background: #eef2ff;
+    border-color: #c5d0f7;
+    color: var(--dc-accent);
+}
+
+.dc-btn-folder { background: #f5f3ff; color: #6d28d9; border: 1.5px solid #ddd6fe; }
+.dc-btn-folder:hover {
+    background: #ede9fe;
+    border-color: #c4b5fd;
+    color: #5b21b6;
+    box-shadow: 0 4px 14px rgba(109,40,217,.18);
+    transform: translateY(-1px);
+}
+
+.dc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.dc-card {
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .25s, transform .25s, border-color .25s;
+    animation: dc-fadeUp .3s ease both;
+    cursor: pointer;
+}
+
+.dc-card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+    transform: translateY(-3px);
+    border-color: #d0d8ea;
+}
+
+@keyframes dc-fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.dc-card:nth-child(1){animation-delay:.04s}
+.dc-card:nth-child(2){animation-delay:.08s}
+.dc-card:nth-child(3){animation-delay:.12s}
+.dc-card:nth-child(4){animation-delay:.16s}
+.dc-card:nth-child(5){animation-delay:.20s}
+.dc-card:nth-child(6){animation-delay:.24s}
+.dc-card:nth-child(7){animation-delay:.28s}
+.dc-card:nth-child(8){animation-delay:.32s}
+
+.dc-band { height: 5px; width: 100%; display: block; flex-shrink: 0; }
+.dc-band.st-en_attente{ background: linear-gradient(90deg,#fbbf24,#f59e0b); }
+.dc-band.st-en_cours{   background: linear-gradient(90deg,#60a5fa,#3b82f6); }
+.dc-band.st-termine{    background: linear-gradient(90deg,#34d399,#10b981); }
+
+.dc-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: white;
+    overflow: hidden;
+    flex-shrink: 0;
+    max-height: 250px;
+}
+
+.dc-thumb img {
+    width: 100%; height: 100%;
+    object-fit: contain; display: block;
+    transition: transform .35s ease;
+}
+
+.dc-card:hover .dc-thumb img { transform: scale(1.04); }
+
+.dc-thumb-top {
+    position: absolute;
+    top: 9px; left: 9px; right: 9px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+}
+
+.dc-type-badge {
+    background: rgba(10,15,30,.62);
+    color: rgba(255,255,255,.9);
+    font-size: 8.5px; font-weight: 800;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px;
+    backdrop-filter: blur(4px);
+}
+
+.dc-status-pill {
+    padding: 3px 8px; border-radius: 6px;
+    font-size: 8.5px; font-weight: 800;
+    letter-spacing: 0.4px;
+    backdrop-filter: blur(4px);
+}
+.dc-status-pill.st-en_attente { background: rgba(251,191,36,.85); color: #451a00; }
+.dc-status-pill.st-en_cours   { background: rgba(59,130,246,.85);  color: #fff; }
+.dc-status-pill.st-termine    { background: rgba(16,185,129,.85);   color: #fff; }
+
+.dc-overlay {
+    position: absolute; inset: 0;
+    background: rgba(10,15,30,.74);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; opacity: 0;
+    transition: opacity .22s ease;
+    backdrop-filter: blur(3px);
+}
+
+.dc-card:hover .dc-overlay { opacity: 1; }
+
+.dc-overlay-actions { display: flex; gap: 10px; }
+
+.dc-ov-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px; border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: transform .15s, background .15s;
+}
+.dc-ov-btn:active { transform: scale(0.88); }
+.dc-ov-btn.ov-view   { background: rgba(59,91,219,.9);  color: #fff; }
+.dc-ov-btn.ov-view:hover   { background: #3b5bdb; transform: translateY(-2px); }
+.dc-ov-btn.ov-export { background: rgba(167,139,250,.9); color: #fff; }
+.dc-ov-btn.ov-export:hover { background: #7c3aed; transform: translateY(-2px); }
+.dc-ov-btn.ov-delete { background: rgba(244,63,94,.85);  color: #fff; }
+.dc-ov-btn.ov-delete:hover { background: #f43f5e; transform: translateY(-2px); }
+
+.dc-overlay-name {
+    font-size: 11px; color: rgba(255,255,255,.65);
+    font-weight: 600; text-align: center;
+    padding: 0 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.dc-card-footer {
+    padding: 11px 13px 13px;
+    border-top: 1.5px solid #e4e9f2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dc-card-name {
+    font-size: 12.5px; font-weight: 700;
+    color: #0d1117;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.dc-card-titre {
+    font-size: 10.5px; color: #8a94a6;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.dc-card-meta {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10.5px; color: #8a94a6;
+    margin-top: 2px;
+}
+.dc-card-meta i { font-size: 9px; }
+
+.dc-empty {
+    grid-column: 1/-1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; padding: 60px 20px;
+}
+
+.dc-empty-icon {
+    width: 60px; height: 60px; border-radius: 16px;
+    background: #f4f6fb;
+    border: 2px dashed #d0d8ea;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #8a94a6;
+}
+
+.dc-empty p     { font-size: 13px; font-weight: 600; color: #4a5568; }
+.dc-empty small { font-size: 11px; color: #8a94a6; }
+
+.dc-pagination {
+    display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+    margin-top: 10px; padding-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.dc-pagination a,
+.dc-pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 36px; min-width: 36px; padding: 0 10px;
+    border-radius: 10px;
+    font-size: 12.5px; font-weight: 600;
+    text-decoration: none;
+    border: 1.5px solid #e4e9f2;
+    color: #8a94a6;
+    background: #ffffff;
+    transition: all .15s;
+}
+
+.dc-pagination a:hover {
+    background: #eef2ff;
+    color: var(--dc-accent);
+    border-color: #c5d0f7;
+}
+
+.dc-pagination .dc-page-current {
+    background: var(--dc-accent);
+    color: #fff;
+    border-color: var(--dc-accent);
+}
+
+.dc-modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(13,17,23,.45);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s ease;
+}
+
+.dc-modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+.dc-modal {
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.08);
+    width: 480px;
+    max-width: calc(100vw - 32px);
+    padding: 28px;
+    transform: translateY(18px) scale(.97);
+    transition: transform .22s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.dc-modal-backdrop.open .dc-modal { transform: translateY(0) scale(1); }
+
+.dc-modal-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.dc-modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 800;
+    color: #0d1117;
+    display: flex; align-items: center; gap: 10px;
+}
+
+.dc-modal-title-icon {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: #eef2ff;
+    display: flex; align-items: center; justify-content: center;
+    color: #3b5bdb; font-size: 14px;
+    border: 1px solid #c5d0f7;
+    flex-shrink: 0;
+}
+
+.dc-modal-title-icon.folder-icon {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border-color: #ddd6fe;
+}
+
+.dc-modal-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #f8fafd; border: 1.5px solid #e4e9f2;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #8a94a6; font-size: 13px;
+    transition: all .15s;
+}
+.dc-modal-close:hover { background: #fff0f3; color: #f43f5e; border-color: #fda4af; }
+
+.dc-drop-zone {
+    border: 2px dashed #d0d8ea;
+    border-radius: 14px;
+    padding: 40px 24px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
+    cursor: pointer; text-align: center;
+    background: #f8fafd;
+    transition: border-color .2s, background .2s;
+}
+
+.dc-drop-zone:hover,
+.dc-drop-zone.drag-over {
+    border-color: #3b5bdb;
+    background: #eef2ff;
+}
+
+.dc-drop-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: #ffffff;
+    border: 1.5px solid #d0d8ea;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #3b5bdb;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.dc-drop-zone:hover .dc-drop-icon,
+.dc-drop-zone.drag-over .dc-drop-icon {
+    border-color: #c5d0f7;
+    box-shadow: 0 0 0 4px #eef2ff;
+}
+
+.dc-drop-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 800;
+    color: #0d1117; margin: 0;
+}
+
+.dc-drop-sub  { font-size: 12px; color: #4a5568; margin: 0; }
+.dc-drop-hint { font-size: 10.5px; color: #8a94a6; margin: 0; }
+
+.dc-drop-zone input[type="file"] { display: none; }
+
+.dc-file-preview {
+    display: none; align-items: center; gap: 12px;
+    background: #f8fafd; border: 1.5px solid #e4e9f2;
+    border-radius: 12px; padding: 12px 14px; margin-top: 14px;
+}
+.dc-file-preview.show { display: flex; }
+
+.dc-file-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(244,63,94,.08);
+    display: flex; align-items: center; justify-content: center;
+    color: #f43f5e; font-size: 17px; flex-shrink: 0;
+    border: 1px solid rgba(244,63,94,.15);
+}
+
+.dc-file-info { flex: 1; min-width: 0; }
+
+.dc-file-name {
+    font-size: 12.5px; font-weight: 700; color: #0d1117;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.dc-file-size { font-size: 11px; color: #8a94a6; margin-top: 2px; }
+
+.dc-file-remove {
+    cursor: pointer; color: #8a94a6; font-size: 14px;
+    flex-shrink: 0; transition: color .15s; padding: 4px;
+    border-radius: 6px;
+}
+.dc-file-remove:hover { color: #f43f5e; background: #fff0f3; }
+
+.dc-progress { display: none; margin-top: 16px; }
+.dc-progress.show { display: block; }
+
+.dc-progress-track {
+    height: 6px; background: #f0f3fa;
+    border-radius: 10px; overflow: hidden; margin-bottom: 7px;
+    border: 1px solid #e4e9f2;
+}
+
+.dc-progress-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #3b5bdb, #818cf8);
+    border-radius: 10px; transition: width .4s ease;
+}
+
+.dc-progress-label {
+    font-size: 11px; color: #8a94a6;
+    text-align: right; font-weight: 500;
+}
+
+.dc-modal-footer {
+    display: flex; gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px; padding-top: 18px;
+    border-top: 1.5px solid #e4e9f2;
+}
+
+#dc-submit-btn:disabled,
+#fd-submit-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.fd-select-zone {
+    border: 2px dashed #ddd6fe;
+    border-radius: 14px;
+    padding: 36px 24px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
+    cursor: pointer; text-align: center;
+    background: #faf8ff;
+    transition: border-color .2s, background .2s;
+}
+
+.fd-select-zone:hover {
+    border-color: #a78bfa;
+    background: #f5f3ff;
+}
+
+.fd-select-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: #ffffff;
+    border: 1.5px solid #ddd6fe;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #6d28d9;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.fd-select-zone:hover .fd-select-icon {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 4px #ede9fe;
+}
+
+.fd-select-zone input[type="file"] { display: none; }
+
+.fd-file-count {
+    display: none;
+    align-items: center; gap: 10px;
+    background: #f5f3ff; border: 1.5px solid #ddd6fe;
+    border-radius: 12px; padding: 12px 16px;
+    margin-top: 14px;
+}
+.fd-file-count.show { display: flex; }
+
+.fd-count-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(109,40,217,.1);
+    border: 1px solid #ddd6fe;
+    display: flex; align-items: center; justify-content: center;
+    color: #6d28d9; font-size: 14px; flex-shrink: 0;
+}
+
+.fd-count-info { flex: 1; }
+
+.fd-count-title {
+    font-size: 12.5px; font-weight: 700; color: #0d1117;
+}
+
+.fd-count-sub { font-size: 11px; color: #8a94a6; margin-top: 2px; }
+
+.dc-toast-container {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    z-index: 9999;
+    display: flex; flex-direction: column;
+    gap: 10px; align-items: flex-end;
+    pointer-events: none;
+}
+
+.dc-toast {
+    display: flex; align-items: center; gap: 12px;
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
+    padding: 14px 18px;
+    min-width: 280px; max-width: 380px;
+    pointer-events: all;
+    animation: toast-in .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.dc-toast.hiding { animation: toast-out .25s ease forwards; }
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(20px) scale(.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-out {
+    to { opacity: 0; transform: translateY(10px) scale(.94); }
+}
+
+.dc-toast-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+}
+
+.dc-toast.toast-success .dc-toast-icon { background: rgba(16,185,129,.1);  color: #10b981; border: 1px solid rgba(16,185,129,.2); }
+.dc-toast.toast-error   .dc-toast-icon { background: rgba(244,63,94,.08);   color: #f43f5e; border: 1px solid rgba(244,63,94,.15); }
+.dc-toast.toast-info    .dc-toast-icon { background: rgba(59,91,219,.08);   color: #3b5bdb; border: 1px solid rgba(59,91,219,.15); }
+
+.dc-toast-body { flex: 1; min-width: 0; }
+
+.dc-toast-title { font-size: 12.5px; font-weight: 700; color: #0d1117; }
+.dc-toast-msg   { font-size: 11.5px; color: #8a94a6; margin-top: 2px; }
+
+.dc-toast-close {
+    cursor: pointer; color: #8a94a6; font-size: 12px;
+    padding: 4px; border-radius: 6px; flex-shrink: 0;
+    transition: color .15s, background .15s;
+}
+.dc-toast-close:hover { color: #f43f5e; background: #fff0f3; }
+
+/* ── Indicateur de recherche en cours ── */
+.dc-search-spinner {
+    display: none;
+    width: 12px; height: 12px;
+    border: 2px solid #e4e9f2;
+    border-top-color: var(--dc-accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    flex-shrink: 0;
+}
+.dc-search-spinner.show { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .dc-search, .dc-combo-wrap {
+        width: 100%;
+        min-width: auto;
+    }
+    .dc-combo-input {
+        width: 100%;
+    }
+    .dc-btn-clear-filters {
+        margin-left: 0;
+        justify-content: center;
+    }
+    .dc-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+    .dc-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .dc-header-actions .dc-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- ── Toast container ── -->
+<div class="dc-toast-container" id="dc-toast-container"></div>
+
+<div class="dc-page">
+    <div class="dc-header">
+        <div class="dc-title-group">
+            <h1 class="dc-title">Documents CV</h1>
+            <span class="dc-count" id="dc-count">
+                {{ page_obj.paginator.count }} document{{ page_obj.paginator.count|pluralize }}
+            </span>
+        </div>
+
+        <div class="dc-header-actions">
+            <button class="dc-btn dc-btn-folder" onclick="fdOpenModal()">
+                <i class="fa-solid fa-folder-open"></i>
+                Importer un dossier
+            </button>
+            <button class="dc-btn dc-btn-primary" onclick="dcOpenModal()">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                Importer un CV
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Toolbar ── -->
+    <div class="dc-toolbar">
+
+        <!-- Recherche texte -->
+        <div class="dc-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="dc-search-input"
+                   placeholder="Rechercher par nom, titre…"
+                   oninput="dcDebouncedSearch(this.value)"
+                   value="{{ q|default:'' }}">
+            <div class="dc-search-spinner" id="dc-search-spinner"></div>
+        </div>
+
+        <div class="dc-filter-sep"></div>
+
+        <!-- Combobox Année -->
+        <div class="dc-combo-wrap" id="combo-year"
+             data-param="year"
+             data-value="{{ selected_year|default:'' }}">
+            <i class="fa-solid fa-calendar dc-combo-icon"></i>
+            <input type="text" class="dc-combo-input {% if selected_year %}active{% endif %}"
+                   placeholder="Toutes les années"
+                   autocomplete="off" readonly>
+            <i class="fa-solid fa-chevron-down dc-combo-caret"></i>
+            <div class="dc-combo-dropdown">
+                <div class="dc-combo-option" data-value="">Toutes les années</div>
+                {% for y in available_years %}
+                <div class="dc-combo-option" data-value="{{ y }}">{{ y }}</div>
+                {% endfor %}
+            </div>
+            <input type="hidden" class="dc-combo-hidden" value="{{ selected_year|default:'' }}">
+        </div>
+
+        <!-- Combobox Mois -->
+        <div class="dc-combo-wrap" id="combo-month"
+             data-param="month"
+             data-value="{{ selected_month|default:'' }}">
+            <i class="fa-solid fa-calendar-week dc-combo-icon"></i>
+            <input type="text" class="dc-combo-input {% if selected_month %}active{% endif %}"
+                   placeholder="Tous les mois"
+                   autocomplete="off" readonly>
+            <i class="fa-solid fa-chevron-down dc-combo-caret"></i>
+            <div class="dc-combo-dropdown">
+                <div class="dc-combo-option" data-value="">Tous les mois</div>
+                <div class="dc-combo-option" data-value="1">Janvier</div>
+                <div class="dc-combo-option" data-value="2">Février</div>
+                <div class="dc-combo-option" data-value="3">Mars</div>
+                <div class="dc-combo-option" data-value="4">Avril</div>
+                <div class="dc-combo-option" data-value="5">Mai</div>
+                <div class="dc-combo-option" data-value="6">Juin</div>
+                <div class="dc-combo-option" data-value="7">Juillet</div>
+                <div class="dc-combo-option" data-value="8">Août</div>
+                <div class="dc-combo-option" data-value="9">Septembre</div>
+                <div class="dc-combo-option" data-value="10">Octobre</div>
+                <div class="dc-combo-option" data-value="11">Novembre</div>
+                <div class="dc-combo-option" data-value="12">Décembre</div>
+            </div>
+            <input type="hidden" class="dc-combo-hidden" value="{{ selected_month|default:'' }}">
+        </div>
+
+        {% if selected_year or selected_month or q %}
+        <a href="?" class="dc-btn-clear-filters">
+            <i class="fa-solid fa-xmark"></i> Effacer les filtres
+        </a>
+        {% endif %}
+
+    </div>
+
+    <!-- ── Grille ── -->
+    <div class="dc-grid" id="dc-grid">
+
+        {% for candidat in page_obj %}
+        <div class="dc-card"
+             data-search="{{ candidat.nom_complet|lower }} {{ candidat.titre_professionnel|lower }}">
+
+            <div class="dc-band st-{{ candidat.etat_analyse }}"></div>
+            <div class="dc-thumb">
+                <img src="{{ candidat.preview_image.url }}"
+                     alt="Aperçu {{ candidat.nom_complet }}"
+                     loading="lazy">
+
+                <div class="dc-thumb-top">
+                    <span class="dc-type-badge">CV · PDF</span>
+                    <span class="dc-status-pill st-{{ candidat.etat_analyse }}">
+                        {{ candidat.get_etat_analyse_display }}
+                    </span>
+                </div>
+
+                <div class="dc-overlay">
+                    <div class="dc-overlay-actions">
+                        <button class="dc-ov-btn ov-view"
+                                title="Voir le CV"
+                                data-url="{{ candidat.fichier_pdf_origine.url }}"
+                                onclick="openViewDoc(this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button class="dc-ov-btn ov-export"
+                                title="{% if candidat.etat_analyse == 'termine' %}Exporter rapport{% else %}Rapport non disponible{% endif %}"
+                                data-identifiant="{{ candidat.candidat_id }}"
+                                {% if candidat.etat_analyse != 'termine' %}disabled style="opacity:.35;cursor:not-allowed;pointer-events:none;"{% else %}onclick="ExportRapport(this)"{% endif %}>
+                            <i class="fa-solid fa-file-export"></i>
+                        </button>
+                    </div>
+                    <span class="dc-overlay-name">{{ candidat.nom_complet|slice:":34" }}</span>
+                </div>
+            </div>
+
+            <div class="dc-card-footer">
+                <div class="dc-card-name">{{ candidat.nom_complet }}</div>
+                <div class="dc-card-titre">{{ candidat.titre_professionnel|slice:":38" }}</div>
+                <div class="dc-card-meta">
+                    <i class="fa-regular fa-clock"></i>
+                    <span>{{ candidat.date_importation|timesince }}</span>
+                </div>
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="dc-empty">
+            <div class="dc-empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <p>Aucun document trouvé</p>
+            {% if selected_year or selected_month or q %}
+                <small>Aucun résultat pour les filtres sélectionnés.</small>
+                <a href="?" class="dc-btn dc-btn-ghost" style="margin-top:6px;">
+                    <i class="fa-solid fa-xmark"></i> Réinitialiser les filtres
+                </a>
+            {% else %}
+                <small>Importez votre premier CV pour démarrer.</small>
+                <button class="dc-btn dc-btn-primary" style="margin-top:6px;" onclick="dcOpenModal()">
+                    <i class="fa-solid fa-plus"></i> Importer un CV
+                </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="dc-pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <span class="dc-page-current">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Modal — Importer un CV -->
+<div class="dc-modal-backdrop" id="dc-modal-backdrop"
+     onclick="if(event.target===this)dcCloseModal()">
+    <div class="dc-modal">
+        <div class="dc-modal-header">
+            <div class="dc-modal-title">
+                <div class="dc-modal-title-icon">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                Importer un CV
+            </div>
+            <button class="dc-modal-close" onclick="dcCloseModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="dc-drop-zone" id="dc-drop-zone"
+             onclick="document.getElementById('dc-file-input').click()">
+            <div class="dc-drop-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+            <p class="dc-drop-title">Glissez votre CV ici</p>
+            <p class="dc-drop-sub">ou cliquez pour parcourir</p>
+            <p class="dc-drop-hint">PDF uniquement · 10 MB maximum</p>
+            <input type="file" id="dc-file-input" accept=".pdf"
+                   onchange="dcHandleFile(this.files[0])">
+        </div>
+
+        <div class="dc-file-preview" id="dc-file-preview">
+            <div class="dc-file-icon"><i class="fa-solid fa-file-pdf"></i></div>
+            <div class="dc-file-info">
+                <div class="dc-file-name" id="dc-file-name">—</div>
+                <div class="dc-file-size" id="dc-file-size">—</div>
+            </div>
+            <i class="fa-solid fa-xmark dc-file-remove" onclick="dcRemoveFile()"></i>
+        </div>
+
+        <div class="dc-progress" id="dc-progress">
+            <div class="dc-progress-track">
+                <div class="dc-progress-bar" id="dc-progress-bar"></div>
+            </div>
+            <div class="dc-progress-label" id="dc-progress-label">Préparation…</div>
+        </div>
+
+        <div class="dc-modal-footer">
+            <button class="dc-btn dc-btn-ghost" onclick="dcCloseModal()">Annuler</button>
+            <button class="dc-btn dc-btn-primary" id="dc-submit-btn"
+                    onclick="dcSubmitUpload()" disabled>
+                <i class="fa-solid fa-arrow-up-from-bracket"></i> Importer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal — Importer un dossier -->
+<div class="dc-modal-backdrop" id="fd-modal-backdrop"
+     onclick="if(event.target===this)fdCloseModal()">
+    <div class="dc-modal">
+        <div class="dc-modal-header">
+            <div class="dc-modal-title">
+                <div class="dc-modal-title-icon folder-icon">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                Importer un dossier
+            </div>
+            <button class="dc-modal-close" onclick="fdCloseModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="fd-select-zone" onclick="document.getElementById('fd-folder-input').click()">
+            <div class="fd-select-icon"><i class="fa-solid fa-folder-tree"></i></div>
+            <p class="dc-drop-title">Sélectionner un dossier</p>
+            <p class="dc-drop-sub">Cliquez pour ouvrir l'explorateur</p>
+            <p class="dc-drop-hint">PDF · DOCX · DOC acceptés</p>
+            <input type="file" id="fd-folder-input"
+                   webkitdirectory mozdirectory directory multiple
+                   onchange="fdHandleFolder(this.files)">
+        </div>
+
+        <div class="fd-file-count" id="fd-file-count">
+            <div class="fd-count-icon"><i class="fa-solid fa-files"></i></div>
+            <div class="fd-count-info">
+                <div class="fd-count-title" id="fd-count-title">—</div>
+                <div class="fd-count-sub"   id="fd-count-sub">—</div>
+            </div>
+            <i class="fa-solid fa-xmark dc-file-remove" onclick="fdReset()"></i>
+        </div>
+
+        <div class="dc-modal-footer">
+            <button class="dc-btn dc-btn-ghost" onclick="fdCloseModal()">Annuler</button>
+            <button class="dc-btn dc-btn-primary" id="fd-submit-btn"
+                    style="background:#6d28d9;"
+                    onclick="fdSubmitImport()" disabled>
+                <i class="fa-solid fa-folder-arrow-down"></i> Lancer l'import
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+
+/* ═══════════════════════════════════
+   COMBOBOX — Année & Mois
+═══════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.dc-combo-wrap').forEach(function (wrap) {
+        const input      = wrap.querySelector('.dc-combo-input');
+        const dropdown   = wrap.querySelector('.dc-combo-dropdown');
+        const hidden     = wrap.querySelector('.dc-combo-hidden');
+        const allOptions = Array.from(wrap.querySelectorAll('.dc-combo-option'));
+        let highlighted  = -1;
+
+        const currentVal = wrap.dataset.value || '';
+        const currentOpt = allOptions.find(o => o.dataset.value === currentVal);
+        if (currentOpt && currentVal !== '') {
+            input.value = currentOpt.textContent.trim();
+        }
+
+        function markSelected(val) {
+            allOptions.forEach(o => o.classList.toggle('selected', o.dataset.value === val));
+        }
+        markSelected(currentVal);
+
+        function openDropdown() {
+            document.querySelectorAll('.dc-combo-wrap.open').forEach(w => {
+                if (w !== wrap) w.classList.remove('open');
+            });
+            wrap.classList.add('open');
+            input.removeAttribute('readonly');
+            filterOptions('');
+            input.select();
+            highlighted = -1;
+        }
+
+        function closeDropdown() {
+            wrap.classList.remove('open');
+            input.setAttribute('readonly', '');
+            highlighted = -1;
+            const val = hidden.value || '';
+            const opt = allOptions.find(o => o.dataset.value === val);
+            input.value = (val === '') ? '' : (opt ? opt.textContent.trim() : '');
+        }
+
+        function filterOptions(query) {
+            const q = query.toLowerCase().trim();
+            let count = 0;
+            allOptions.forEach(function (opt) {
+                const match = q === '' || opt.textContent.toLowerCase().includes(q);
+                opt.style.display = match ? '' : 'none';
+                if (match) count++;
+            });
+            let emptyMsg = dropdown.querySelector('.dc-combo-empty');
+            if (count === 0) {
+                if (!emptyMsg) {
+                    emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'dc-combo-option dc-combo-empty';
+                    emptyMsg.textContent = 'Aucun résultat';
+                    dropdown.appendChild(emptyMsg);
+                }
+                emptyMsg.style.display = '';
+            } else if (emptyMsg) {
+                emptyMsg.style.display = 'none';
+            }
+            highlighted = -1;
+        }
+
+        function selectOption(opt) {
+            const val = opt.dataset.value;
+            hidden.value = val;
+            input.value  = val === '' ? '' : opt.textContent.trim();
+            input.classList.toggle('active', val !== '');
+            markSelected(val);
+            closeDropdown();
+            dcApplyFilters();
+        }
+
+        input.addEventListener('click', function () {
+            wrap.classList.contains('open') ? closeDropdown() : openDropdown();
+        });
+
+        input.addEventListener('input', function () {
+            if (!wrap.classList.contains('open')) {
+                wrap.classList.add('open');
+                input.removeAttribute('readonly');
+            }
+            filterOptions(this.value);
+            hidden.value = '';
+            input.classList.remove('active');
+        });
+
+        input.addEventListener('keydown', function (e) {
+            const visible = allOptions.filter(o =>
+                o.style.display !== 'none' && !o.classList.contains('dc-combo-empty')
+            );
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlighted = Math.min(highlighted + 1, visible.length - 1);
+                updateHighlight(visible);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlighted = Math.max(highlighted - 1, 0);
+                updateHighlight(visible);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlighted >= 0 && visible[highlighted]) selectOption(visible[highlighted]);
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+                input.blur();
+            }
+        });
+
+        function updateHighlight(visible) {
+            allOptions.forEach(o => o.classList.remove('highlighted'));
+            if (visible[highlighted]) {
+                visible[highlighted].classList.add('highlighted');
+                visible[highlighted].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        allOptions.forEach(function (opt) {
+            opt.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                selectOption(opt);
+            });
+        });
+
+        document.addEventListener('mousedown', function (e) {
+            if (!wrap.contains(e.target)) closeDropdown();
+        });
+    });
+});
+
+
+/* ═══════════════════════════════════
+   RECHERCHE — debounce serveur
+═══════════════════════════════════ */
+let dcSearchTimer = null;
+
+function dcDebouncedSearch(val) {
+    // 1. Filtre local immédiat sur les cartes visibles
+    dcFilterCards(val);
+
+    // 2. Requête serveur après 500ms de pause
+    clearTimeout(dcSearchTimer);
+    const spinner = document.getElementById('dc-search-spinner');
+    spinner.classList.add('show');
+
+    dcSearchTimer = setTimeout(function () {
+        spinner.classList.remove('show');
+        dcApplyFilters();
+    }, 500);
+}
+
+function dcFilterCards(q) {
+    // Filtre local uniquement sur les cartes de la page courante
+    const cards = document.querySelectorAll('#dc-grid .dc-card');
+    const term  = q.toLowerCase().trim();
+    cards.forEach(c => {
+        const match = !term || (c.dataset.search || '').includes(term);
+        c.style.display = match ? '' : 'none';
+    });
+}
+
+
+/* ═══════════════════════════════════
+   FILTRES — navigation URL
+═══════════════════════════════════ */
+function dcApplyFilters() {
+    const year  = document.querySelector('#combo-year  .dc-combo-hidden').value;
+    const month = document.querySelector('#combo-month .dc-combo-hidden').value;
+    const q     = document.getElementById('dc-search-input').value.trim();
+
+    const params = new URLSearchParams();
+    if (q)     params.set('q',     q);
+    if (year)  params.set('year',  year);
+    if (month) params.set('month', month);
+    params.set('page', '1');
+
+    window.location.href = '?' + params.toString();
+}
+
+
+/* ═══════════════════════════════════
+   TOAST
+═══════════════════════════════════ */
+function dcToast(type, title, msg, duration = 5000) {
+    const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', info: 'fa-circle-info' };
+    const container = document.getElementById('dc-toast-container');
+    const t = document.createElement('div');
+    t.className = `dc-toast toast-${type}`;
+    t.innerHTML = `
+        <div class="dc-toast-icon"><i class="fa-solid ${icons[type] || icons.info}"></i></div>
+        <div class="dc-toast-body">
+            <div class="dc-toast-title">${title}</div>
+            ${msg ? `<div class="dc-toast-msg">${msg}</div>` : ''}
+        </div>
+        <i class="fa-solid fa-xmark dc-toast-close" onclick="dcDismissToast(this.parentElement)"></i>
+    `;
+    container.appendChild(t);
+    if (duration > 0) setTimeout(() => dcDismissToast(t), duration);
+    return t;
+}
+
+function dcDismissToast(el) {
+    if (!el || el.classList.contains('hiding')) return;
+    el.classList.add('hiding');
+    setTimeout(() => el.remove(), 280);
+}
+
+
+/* ═══════════════════════════════════
+   MODAL — CV unique
+═══════════════════════════════════ */
+let dcFile = null;
+
+function dcOpenModal()  { document.getElementById('dc-modal-backdrop').classList.add('open'); }
+function dcCloseModal() {
+    document.getElementById('dc-modal-backdrop').classList.remove('open');
+    dcRemoveFile();
+    dcResetProgress();
+}
+
+const dcDrop = document.getElementById('dc-drop-zone');
+if(dcDrop) {
+    dcDrop.addEventListener('dragover',  e => { e.preventDefault(); dcDrop.classList.add('drag-over'); });
+    dcDrop.addEventListener('dragleave', ()  => dcDrop.classList.remove('drag-over'));
+    dcDrop.addEventListener('drop', e => {
+        e.preventDefault();
+        dcDrop.classList.remove('drag-over');
+        if (e.dataTransfer.files[0]) dcHandleFile(e.dataTransfer.files[0]);
+    });
+}
+
+function dcHandleFile(file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        dcToast('error', 'Format invalide', 'Seuls les fichiers PDF sont acceptés.'); return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        dcToast('error', 'Fichier trop volumineux', 'Taille maximum : 10 MB.'); return;
+    }
+    dcFile = file;
+    document.getElementById('dc-file-name').textContent = file.name;
+    document.getElementById('dc-file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    document.getElementById('dc-file-preview').classList.add('show');
+    const btn = document.getElementById('dc-submit-btn');
+    btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+}
+
+function dcRemoveFile() {
+    dcFile = null;
+    const fileInput = document.getElementById('dc-file-input');
+    if(fileInput) fileInput.value = '';
+    const preview = document.getElementById('dc-file-preview');
+    if(preview) preview.classList.remove('show');
+    const btn = document.getElementById('dc-submit-btn');
+    if(btn) btn.disabled = true;
+}
+
+function dcResetProgress() {
+    const prog = document.getElementById('dc-progress');
+    const bar  = document.getElementById('dc-progress-bar');
+    const lbl  = document.getElementById('dc-progress-label');
+    if(prog) prog.classList.remove('show');
+    if(bar) {
+        bar.style.width      = '0%';
+        bar.style.background = 'linear-gradient(90deg,#3b5bdb,#818cf8)';
+    }
+    if(lbl) lbl.textContent      = 'Préparation…';
+}
+
+let dcInterval = null;
+
+function dcStartProgress() {
+    const prog = document.getElementById('dc-progress');
+    if(prog) prog.classList.add('show');
+    
+    const bar   = document.getElementById('dc-progress-bar');
+    const lbl   = document.getElementById('dc-progress-label');
+    
+    const steps = [
+        {pct:12,  msg:'Envoi du fichier…'},
+        {pct:30,  msg:'Extraction du texte…'},
+        {pct:55,  msg:'Analyse IA en cours…'},
+        {pct:75,  msg:'Structuration des données…'},
+        {pct:90,  msg:'Sauvegarde en base…'},
+    ];
+    let i = 0;
+    dcInterval = setInterval(() => {
+        if (i < steps.length) { 
+            if(bar) bar.style.width = steps[i].pct + '%'; 
+            if(lbl) lbl.textContent = steps[i].msg; 
+            i++; 
+        }
+        else clearInterval(dcInterval);
+    }, 950);
+}
+
+function dcFinishProgress(ok) {
+    clearInterval(dcInterval);
+    const bar = document.getElementById('dc-progress-bar');
+    const lbl = document.getElementById('dc-progress-label');
+    if(bar) bar.style.width = '100%';
+    if(ok) { 
+        if(bar) bar.style.background = 'linear-gradient(90deg,#34d399,#10b981)'; 
+        if(lbl) lbl.textContent = '✓ CV importé avec succès !'; 
+    }
+    else    { 
+        if(bar) bar.style.background = 'linear-gradient(90deg,#f43f5e,#fb7185)'; 
+        if(lbl) lbl.textContent = '✗ Une erreur est survenue.'; 
+    }
+}
+
+async function dcSubmitUpload() {
+    if (!dcFile) return;
+    const btn = document.getElementById('dc-submit-btn');
+    btn.disabled = true; btn.style.opacity = '.6';
+    const fd = new FormData();
+    fd.append('path_cv', dcFile);
+    dcStartProgress();
+    try {
+        const res  = await fetch("{% url 'upload' %}", { method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: fd });
+        const data = await res.json();
+        if (data.status === 'success') { 
+            dcFinishProgress(true); 
+            setTimeout(() => { dcCloseModal(); location.reload(); }, 1300); 
+        }
+        else { 
+            dcFinishProgress(false); 
+            btn.disabled = false; btn.style.opacity = '1'; 
+        }
+    } catch(err) { 
+        console.error(err); 
+        dcFinishProgress(false); 
+        btn.disabled = false; btn.style.opacity = '1'; 
+    }
+}
+
+
+/* ═══════════════════════════════════
+   MODAL — Import dossier
+═══════════════════════════════════ */
+const VALID_EXTS = /\.(pdf|docx|doc)$/i;
+let fdFiles = [], fdFolderName = '';
+
+function fdOpenModal()  { document.getElementById('fd-modal-backdrop').classList.add('open'); }
+function fdCloseModal() { document.getElementById('fd-modal-backdrop').classList.remove('open'); fdReset(); }
+
+function fdReset() {
+    fdFiles = []; fdFolderName = '';
+    const folderInput = document.getElementById('fd-folder-input');
+    if(folderInput) folderInput.value = '';
+    
+    const countDisplay = document.getElementById('fd-file-count');
+    if(countDisplay) countDisplay.classList.remove('show');
+    
+    const submitBtn = document.getElementById('fd-submit-btn');
+    if(submitBtn) submitBtn.disabled = true;
+}
+
+function fdHandleFolder(fileList) {
+    fdFiles = Array.from(fileList).filter(f => VALID_EXTS.test(f.name));
+    if (fdFiles.length === 0) {
+        dcToast('error', 'Aucun fichier compatible', 'Le dossier ne contient aucun PDF, DOCX ou DOC.');
+        fdReset(); return;
+    }
+    fdFolderName = (fileList[0]?.webkitRelativePath || '').split('/')[0] || 'Dossier sélectionné';
+    const extCounts = {};
+    fdFiles.forEach(f => { const e = f.name.split('.').pop().toLowerCase(); extCounts[e] = (extCounts[e] || 0) + 1; });
+    const extSummary = Object.entries(extCounts).map(([e, n]) => `${n} ${e.toUpperCase()}`).join(' · ');
+    
+    const countTitle = document.getElementById('fd-count-title');
+    const countSub = document.getElementById('fd-count-sub');
+    
+    if(countTitle) countTitle.textContent = `${fdFiles.length} fichier${fdFiles.length > 1 ? 's' : ''} détecté${fdFiles.length > 1 ? 's' : ''} — ${fdFolderName}`;
+    if(countSub) countSub.textContent = extSummary;
+    
+    const countDisplay = document.getElementById('fd-file-count');
+    if(countDisplay) countDisplay.classList.add('show');
+    
+    const submitBtn = document.getElementById('fd-submit-btn');
+    if(submitBtn) submitBtn.disabled = false;
+}
+
+async function fdSubmitImport() {
+    if (!fdFiles.length) return;
+    const btn = document.getElementById('fd-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Import en cours…';
+    const formData = new FormData();
+    fdFiles.forEach(f => formData.append('files', f));
+    formData.append('folder_name', fdFolderName);
+    try {
+        const res  = await fetch("{% url 'import_folder' %}", { method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: formData });
+        const data = await res.json();
+        fdCloseModal();
+        if (data.status === 'started') {
+            dcToast('info', 'Import lancé en arrière-plan', `${data.file_count} fichier${data.file_count > 1 ? 's' : ''} en cours de traitement…`);
+        } else {
+            dcToast('error', 'Erreur lors du lancement', data.message || 'Une erreur inattendue est survenue.');
+        }
+    } catch (err) { console.error(err); fdCloseModal(); dcToast('error', 'Erreur réseau', 'Impossible de contacter le serveur.'); }
+}
+</script>
+
+{% endblock %}

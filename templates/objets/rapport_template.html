@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport de Compatibilité — DeliorAI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 11.5px;
+      color: #1a1a2e;
+      background: #f3f4f6; /* Fond gris pour l'écran, blanc pour l'impression */
+      line-height: 1.6;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      padding: 20px;
+    }
+
+    .doc {
+      width: 100%;
+      max-width: 210mm; /* Largeur A4 */
+      margin: 0 auto;
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       COVER HEADER
+    ══════════════════════════════════════ */
+    .cover {
+      background: #0a0f1e;
+      padding: 32px 36px 28px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 3px;
+      background: linear-gradient(90deg, #4f7cff 0%, #a78bfa 50%, #f472b6 100%);
+    }
+
+    .cover::after {
+      content: '';
+      position: absolute;
+      right: -40px; top: -40px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79,124,255,0.15) 0%, transparent 70%);
+    }
+
+    .cover-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .brand-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f7cff, #a78bfa);
+    }
+
+    .brand-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .cover-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 22px;
+      color: #ffffff;
+      line-height: 1.2;
+      font-weight: 400;
+      letter-spacing: -0.3px;
+    }
+
+    .cover-subtitle {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .cover-meta { text-align: right; }
+
+    .meta-chip {
+      display: inline-block;
+      font-size: 9.5px;
+      color: #94a3b8;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+
+    .meta-lines {
+      font-size: 9.5px;
+      color: #64748b;
+      line-height: 1.8;
+      margin-top: 6px;
+    }
+
+    /* ══════════════════════════════════════
+       IDENTITY BAND
+    ══════════════════════════════════════ */
+    .identity-band {
+      display: flex;
+      background: #f8fafc;
+      border-bottom: 1px solid #e8ecf0;
+      margin-bottom: 28px;
+      flex-wrap: wrap; /* Permet le retour à la ligne sur mobile */
+    }
+
+    .identity-cell {
+      flex: 1;
+      padding: 18px 24px;
+      min-width: 200px; /* Évite que les cellules ne deviennent trop petites */
+    }
+
+    .identity-cell + .identity-cell {
+      border-left: 1px solid #e8ecf0;
+    }
+
+    .identity-tag {
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #4f7cff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .identity-tag::before {
+      content: '';
+      display: inline-block;
+      width: 14px; height: 1.5px;
+      background: #4f7cff;
+    }
+
+    .identity-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0a0f1e;
+      margin-bottom: 3px;
+      word-break: break-word;
+    }
+
+    .identity-sub {
+      font-size: 10.5px;
+      color: #64748b;
+      line-height: 1.65;
+    }
+
+    /* ── Agent chip ── */
+    .agent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 4px 10px 4px 4px;
+      background: #eff4ff;
+      border: 1px solid #c7d7ff;
+      border-radius: 20px;
+      font-size: 10px;
+      color: #4f7cff;
+      font-weight: 600;
+      flex-wrap: wrap;
+    }
+
+    .agent-avatar {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #4f7cff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px;
+      color: #fff;
+      font-weight: 700;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .agent-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* ══════════════════════════════════════
+       BODY CONTENT
+    ══════════════════════════════════════ */
+    .body-content { padding: 0 28px 28px; }
+
+    /* ══════════════════════════════════════
+       SECTION
+    ══════════════════════════════════════ */
+    .section { margin-bottom: 26px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #0a0f1e;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0a0f1e;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: #e8ecf0;
+    }
+
+    /* ══════════════════════════════════════
+       CRITERIA TABLE
+    ══════════════════════════════════════ */
+    .criteria-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed; /* Important pour le responsive */
+    }
+
+    .criteria-table col.c1 { width: 25%; } /* Ajusté pour laisser plus de place au texte */
+    .criteria-table col.c2 { width: 75%; }
+
+    .criteria-table thead tr { background: #0a0f1e; }
+
+    .criteria-table th {
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    .criteria-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .criteria-table tbody tr:last-child { border-bottom: none; }
+    .criteria-table tbody tr:nth-child(even) { background: #fafbfd; }
+
+    .criteria-table td {
+      padding: 10px 14px;
+      vertical-align: top;
+      line-height: 1.6;
+      color: #374151;
+      word-wrap: break-word; /* Empêche le texte de dépasser */
+    }
+
+    .criteria-table td:first-child {
+      font-weight: 600;
+      font-size: 10.5px;
+      color: #0a0f1e;
+    }
+
+    .criteria-wrapper {
+      border: 1px solid #e8ecf0;
+      border-radius: 6px;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    /* ══════════════════════════════════════
+       STRENGTHS / IMPROVEMENTS GRID
+    ══════════════════════════════════════ */
+    .two-col { 
+      display: flex; 
+      gap: 14px; 
+      flex-wrap: wrap; /* Permet le passage à la ligne sur petit écran */
+    }
+
+    .card {
+      flex: 1;
+      min-width: 0; /* Important pour flexbox */
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #e8ecf0;
+      width: 100%; /* Fallback pour mobile */
+    }
+
+    .card-head {
+      padding: 10px 16px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .card-head-positive {
+      background: #f0fdf4;
+      color: #16a34a;
+      border-bottom: 1px solid #d1fae5;
+    }
+
+    .card-head-neutral {
+      background: #fff7ed;
+      color: #c2410c;
+      border-bottom: 1px solid #fed7aa;
+    }
+
+    .card-icon {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px;
+      flex-shrink: 0;
+    }
+
+    .card-icon-positive { background: #16a34a; color: #fff; }
+    .card-icon-neutral  { background: #c2410c; color: #fff; }
+
+    .card-body {
+      padding: 12px 16px;
+      background: #ffffff;
+    }
+
+    .card-body ul { list-style: none; padding: 0; margin: 0; }
+
+    .card-body li {
+      font-size: 11px;
+      color: #374151;
+      line-height: 1.55;
+      padding: 5px 0 5px 14px;
+      position: relative;
+      border-bottom: 1px solid #f8fafc;
+      word-wrap: break-word;
+    }
+
+    .card-body li:last-child { border-bottom: none; }
+
+    .card-body li::before {
+      content: '–';
+      position: absolute;
+      left: 0;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════
+       RECOMMENDATION
+    ══════════════════════════════════════ */
+    .reco-block {
+      background: #0a0f1e;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .reco-block::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 3px;
+      background: linear-gradient(90deg, #4f7cff 0%, #a78bfa 50%, #f472b6 100%);
+    }
+
+    .reco-top {
+      padding: 18px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .reco-decision {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 18px;
+      color: #ffffff;
+      font-weight: 400;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .reco-badge {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: rgba(79,124,255,0.2);
+      color: #93c5fd;
+      border: 1px solid rgba(79,124,255,0.3);
+      white-space: nowrap;
+    }
+
+    .reco-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+      margin: 0 22px;
+    }
+
+    .reco-body {
+      padding: 14px 22px 20px;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.7;
+      word-wrap: break-word;
+    }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    .footer {
+      margin-bottom: 28px;
+      margin-top: 20px;
+      padding: 12px 0 0;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-brand {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #cbd5e1;
+    }
+
+    .footer-brand span { color: #4f7cff; }
+    .footer-note { font-size: 9px; color: #cbd5e1; }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE & PRINT
+    ══════════════════════════════════════ */
+    
+    /* Mobile & Tablet */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .doc { border-radius: 4px; }
+      
+      .cover { padding: 20px; }
+      .cover-title { font-size: 18px; }
+      .cover-inner { flex-direction: column; align-items: flex-start; }
+      .cover-meta { text-align: left; margin-top: 15px; }
+      
+      .identity-band { flex-direction: column; }
+      .identity-cell { border-left: none !important; border-bottom: 1px solid #e8ecf0; }
+      .identity-cell:last-child { border-bottom: none; }
+      
+      .two-col { flex-direction: column; }
+      
+      .reco-top { flex-direction: column; align-items: flex-start; }
+      .reco-badge { margin-top: 10px; }
+      
+      .footer { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* Print */
+    @media print {
+      body { 
+        background: #fff; 
+        padding: 0; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+      }
+      .doc { 
+        box-shadow: none; 
+        margin: 0; 
+        width: 100%; 
+        max-width: none; 
+        border-radius: 0;
+      }
+      .no-break { page-break-inside: avoid; }
+      .pb-before { page-break-before: always; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="doc">
+
+  <!-- ═══════════ COVER ═══════════ -->
+  <div class="cover no-break">
+    <div class="cover-inner">
+      <div>
+        <div class="brand">
+          <div class="brand-dot"></div>
+          <span class="brand-name">DeliorAI — Analyse intelligente</span>
+        </div>
+        <div class="cover-title">Rapport de Compatibilité</div>
+        <div class="cover-subtitle">Évaluation automatisée du profil candidat</div>
+      </div>
+      <div class="cover-meta">
+        <div class="meta-chip">{{ meta.type_analyse }}</div>
+        <div class="meta-lines">
+          Date : {{ meta.date_analyse|slice:":10" }}<br>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ IDENTITY BAND ═══════════ -->
+  <div class="identity-band no-break">
+
+    <!-- Candidat -->
+    <div class="identity-cell">
+      <div class="identity-tag">Candidat</div>
+      <div class="identity-name">{{ candidat.nom_complet }}</div>
+      <div class="identity-sub">
+        {{ candidat.titre_professionnel }}<br>
+        {{ candidat.ville }}<br>
+        {{ candidat.email }}<br>
+        {{ candidat.telephone }}
+      </div>
+    </div>
+
+    <!-- Poste -->
+    <div class="identity-cell">
+      <div class="identity-tag">Poste analysé</div>
+      <div class="identity-name">{{ poste.titre_professionnel }}</div>
+      <div class="identity-sub">
+        {{ poste.localisation }}<br>
+        {{ poste.type_contrat }}
+      </div>
+    </div>
+
+    <!-- Agent traitant -->
+    <div class="identity-cell">
+      <div class="identity-tag">Agent traitant</div>
+      <div class="identity-name">{{ agent.last_name }} {{ agent.first_name }}</div>
+      <div class="identity-sub">{{ agent.post }}</div>
+      <div class="agent-chip">
+        <div class="agent-avatar">
+          {% if agent.image %}
+            <img src="{{ agent.image }}" alt="">
+          {% endif %}
+        </div>
+        {{ agent.email }}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ BODY ═══════════ -->
+  <div class="body-content">
+
+    <!-- SECTION 1 — Analyse détaillée -->
+    <div class="section pb-before">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <div class="section-title">Analyse détaillée par critère</div>
+        <div class="section-line"></div>
+      </div>
+      <div class="criteria-wrapper no-break">
+        <table class="criteria-table">
+          <colgroup>
+            <col class="c1">
+            <col class="c2">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Critère</th>
+              <th>Analyse</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Formation</td>               <td>{{ detail.formation.analyse }}</td></tr>
+            <tr><td>Expérience</td>              <td>{{ detail.experience.analyse }}</td></tr>
+            <tr><td>Compétences techniques</td>  <td>{{ detail.competences_techniques.analyse }}</td></tr>
+            <tr><td>Compétences comportementales</td><td>{{ detail.competences_comportementales.analyse }}</td></tr>
+            <tr><td>Langues</td>                 <td>{{ detail.langues.analyse }}</td></tr>
+            <tr><td>Certifications</td>          <td>{{ detail.projets_certifications.analyse }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 2 — Forces & axes -->
+    <div class="section no-break">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <div class="section-title">Forces et axes d'amélioration</div>
+        <div class="section-line"></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head card-head-positive">
+            <div class="card-icon card-icon-positive">✓</div>
+            Points forts
+          </div>
+          <div class="card-body">
+            <ul>
+              {% for item in points_forts %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head card-head-neutral">
+            <div class="card-icon card-icon-neutral">↑</div>
+            Axes d'amélioration
+          </div>
+          <div class="card-body">
+            <ul>
+              {% for item in points_a_ameliorer %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3 — Recommandation -->
+    <div class="section no-break">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <div class="section-title">Recommandation finale</div>
+        <div class="section-line"></div>
+      </div>
+      <div class="reco-block">
+        <div class="reco-top">
+          <div class="reco-decision">{{ recommandation_finale.decision }}</div>
+          <div class="reco-badge">Priorité : {{ recommandation_finale.niveau_priorite }}</div>
+        </div>
+        <div class="reco-divider"></div>
+        <div class="reco-body">{{ recommandation_finale.justification }}</div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="footer-brand">Delior<span>AI</span></div>
+      <div class="footer-note">Document confidentiel — usage interne uniquement</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

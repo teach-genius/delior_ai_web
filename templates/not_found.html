@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.1/lottie.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not found page</title>
+    <style>
+        #not_found_view::-webkit-scrollbar{
+            width: 0px;
+        }
+        body::-webkit-scrollbar{
+            width: 0px;
+        }
+        body{
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    
+    <main style="height: 100vh;" id="not_found_view">
+        
+    </main>
+    <script>
+    var animation = lottie.loadAnimation({
+        container: document.getElementById('not_found_view'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: "{% static 'animations/Page_Not_Found_404.json' %}"
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+.token_cache.json
+**/.token_cache.json
+aiagent/auths/.token_cache.json
+.env

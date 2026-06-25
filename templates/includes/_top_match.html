@@ -1,0 +1,212 @@
+{% for top in cvs %}
+<div class="match-card rank-{{ forloop.counter }}">
+
+    <div class="match-band"></div>
+
+    <div class="match-rank">
+        {% if forloop.counter == 1 %}<i class="fa-solid fa-trophy"></i>
+        {% elif forloop.counter == 2 %}<i class="fa-solid fa-medal"></i>
+        {% elif forloop.counter == 3 %}<i class="fa-solid fa-award"></i>
+        {% else %}#{{ forloop.counter }}{% endif %}
+    </div>
+
+    <div class="match-preview">
+        <img src="{{ top.preview_image.url }}"
+             alt="CV {{ top.nom_complet }}"
+             loading="lazy">
+    </div>
+
+    <div class="match-footer">
+        <div class="match-info">
+            <span class="match-label">Top {{ forloop.counter }}</span>
+            <span class="match-state">
+                <span class="state-dot st-{{ top.etat_analyse }}"
+                      id="dot-{{ top.candidat_id }}"></span>
+                <span id="etat-{{ top.candidat_id }}">{{ top.get_etat_analyse_display }}</span>
+            </span>
+        </div>
+        <div class="match-name">{{ top.nom_complet|default:"—"|slice:":24" }}</div>
+        <div class="match-actions">
+
+            <!-- Bouton générer -->
+            <button class="match-btn btn-generate"
+                    id="btn-gen-{{ top.candidat_id }}"
+                    data-identifiant="{{ top.candidat_id }}"
+                    onclick="GenerateRepport(this)"
+                    title="Générer rapport">
+                <i class="fa-solid fa-arrows-rotate" id="icon-gen-{{ top.candidat_id }}"></i>
+            </button>
+
+            <!-- Bouton voir CV -->
+            <button class="match-btn btn-view-cv"
+                    data-url="{{ top.fichier_pdf_origine.url }}"
+                    onclick="openViewDoc(this)"
+                    title="Voir CV">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+
+            <!-- Bouton voir rapport -->
+            <button class="match-btn btn-view-report {% if top.etat_analyse == 'en_attente' %}btn-disabled{% endif %}"
+                    id="btn-report-{{ top.candidat_id }}"
+                    data-identifiant="{{ top.candidat_id }}"
+                    {% if top.etat_analyse != 'en_attente' %}onclick="VoirRapport(this)"{% endif %}
+                    title="{% if top.etat_analyse == 'en_attente' %}Rapport non disponible{% else %}Voir rapport{% endif %}"
+                    {% if top.etat_analyse == 'en_attente' %}disabled{% endif %}>
+                <i class="fa-solid fa-file-lines"></i>
+            </button>
+
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="an-empty">
+    <div class="an-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+    <p>Aucun candidat correspondant</p>
+    <small>Affinez votre description ou importez plus de CV</small>
+</div>
+{% endfor %}
+
+<style>
+.match-card {
+    flex: 0 0 auto;
+    width: 175px;
+    background: #ffffff;
+    border: 1.5px solid #e4e9f2;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    max-height: 280px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    position: relative;
+    transition: box-shadow .25s, transform .25s, border-color .25s;
+    animation: mc-in .3s ease both;
+}
+
+.match-card:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,.12);
+    transform: translateY(-4px);
+    border-color: #d0d8ea;
+}
+
+@keyframes mc-in {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+.match-card:nth-child(1){animation-delay:.04s}
+.match-card:nth-child(2){animation-delay:.08s}
+.match-card:nth-child(3){animation-delay:.12s}
+.match-card:nth-child(4){animation-delay:.16s}
+.match-card:nth-child(5){animation-delay:.20s}
+
+.match-band {
+    height: 4px; width: 100%;
+    display: block; flex-shrink: 0;
+}
+
+.rank-1 .match-band { background: linear-gradient(90deg,#fbbf24,#f59e0b); }
+.rank-2 .match-band { background: linear-gradient(90deg,#94a3b8,#64748b); }
+.rank-3 .match-band { background: linear-gradient(90deg,#fb923c,#ea580c); }
+.match-card:not(.rank-1):not(.rank-2):not(.rank-3) .match-band {
+    background: linear-gradient(90deg,#60a5fa,#3b82f6);
+}
+
+.match-rank {
+    position: absolute; top: 12px; left: 10px; z-index: 2;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+
+.rank-1 .match-rank { background:#fef3c7; color:#d97706; }
+.rank-2 .match-rank { background:#f1f5f9; color:#64748b; }
+.rank-3 .match-rank { background:#fff7ed; color:#c2642a; }
+.match-card:not(.rank-1):not(.rank-2):not(.rank-3) .match-rank {
+    background:#eef2ff; color:#3b5bdb; font-size:10px;
+}
+
+.match-preview {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #f0f3fa;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-bottom: 10px;
+}
+
+.match-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform .35s ease;
+}
+
+.match-card:hover .match-preview img { transform: scale(1.04); }
+
+.match-footer {
+    padding: 10px 11px 12px;
+    border-top: 1.5px solid #e4e9f2;
+    display: flex; flex-direction: column; gap: 6px;
+    flex-shrink: 0;
+}
+
+.match-info {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 4px;
+}
+
+.match-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10.5px; font-weight: 800; color: #0d1117;
+}
+
+.match-state {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 9px; color: #8a94a6; font-weight: 500;
+}
+
+.state-dot {
+    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+}
+
+.state-dot.st-termine    { background: #10b981; }
+.state-dot.st-en_cours   { background: #3b82f6; }
+.state-dot.st-en_attente { background: #f59e0b; }
+
+.match-name {
+    font-size: 11px; font-weight: 600; color: #0d1117;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.match-actions { display: flex; gap: 5px; }
+
+.match-btn {
+    flex: 1; height: 28px; border-radius: 8px;
+    border: 1.5px solid #e4e9f2; background: #f8fafd;
+    font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; color: #4a5568;
+}
+
+.match-btn:hover { transform: translateY(-1px); }
+.btn-generate:hover    { background:#eef2ff; border-color:#c5d0f7; color:#3b5bdb; }
+.btn-view-cv:hover     { background:#ecfdf5; border-color:#6ee7b7; color:#10b981; }
+.btn-view-report:hover { background:#f3f0ff; border-color:#ddd6fe; color:#7c3aed; }
+
+.match-btn.btn-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.icon-spinning {
+    animation: spin .8s linear infinite;
+    display: inline-block;
+}
+</style>
+

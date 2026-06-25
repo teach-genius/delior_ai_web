@@ -1,0 +1,81 @@
+body{
+    background: #F9FAFB;
+    }
+#main{
+    display: flex;
+    flex-direction: row;
+    width: 100dvw;
+    position: relative;
+}
+#aside-left,
+#aside-right {
+    overflow: hidden;
+}
+
+#aside-left{
+padding: 12px;
+width: 240px;
+height: 100dvh;
+background-color: #ffffff;
+border-right: solid 1px #E8E8E8;
+position: relative;
+}
+#aside-right{
+background-color: #ffffff;
+height: 100dvh;
+flex: 1;
+}
+#nav{
+    width: 100%;
+    display: flex;
+    padding: 10px 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffffff;
+    border-bottom: 1px solid #FDF8E8;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+}
+.option.active{
+    background: #E1B66E;
+    color: #fff3cd;
+    p{
+        color: #fff3cd;
+        font-weight: 400;
+    }
+}
+
+.option:hover{
+    background-color: #e1b76ee2;
+}
+
+.option{
+    border-radius: 8px;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    width: 100%;
+    justify-content: start;
+    padding: 12px;
+    align-items: center;
+    transition: background-color 0.5s ease-in;
+    p{
+        font-size: 14px;
+    }
+}
+
+.bloc-option{
+    width: 100%;
+    display: flex;
+    margin-top: 5px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+}
+.bloc-option:hover{
+    cursor: pointer;
+}
+#search-barre:focus{
+    outline: none;
+    box-shadow: none;
+}

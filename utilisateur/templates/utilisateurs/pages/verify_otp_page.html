@@ -1,0 +1,182 @@
+{% extends 'utilisateurs/base_user.html' %}
+{% load static %}
+
+{% block title %}Vérification{% endblock %}
+
+{% block content %}
+
+<style>
+.lg-otp-input {
+  width: 48px;
+  height: 44px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  border: 1px solid var(--lg-border-2);
+  border-radius: var(--lg-radius-sm);
+  background: var(--lg-surface-2);
+  color: var(--lg-text-1);
+  outline: none;
+  display: inline-block;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.lg-otp-input:focus {
+  border-color: var(--lg-gold);
+  box-shadow: 0 0 0 3px rgba(214,167,100,.12);
+  background: rgba(214,167,100,.04);
+}
+.lg-otp-input.filled { border-color: var(--lg-gold-dk); }
+.lg-otp-input.error  {
+  border-color: var(--lg-danger);
+  box-shadow: 0 0 0 3px rgba(244,63,94,.1);
+}
+.lg-otp-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.lg-info {
+  font-size: 13px;
+  color: var(--lg-text-2);
+  background: var(--lg-surface-2);
+  border-radius: var(--lg-radius-sm);
+  padding: 10px 14px;
+  line-height: 1.5;
+  border-left: 2px solid var(--lg-gold-dk);
+}
+#timer         { font-weight: 600; color: var(--lg-gold-dk); }
+#timer.expired { color: var(--lg-danger); }
+</style>
+
+<div class="lg-card">
+
+  <div class="lg-header">
+    <h1 class="lg-title">
+      Vérification
+      <span style="display:flex;align-items:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+             fill="none" stroke="#c4924d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+          <path d="M3 7l9 6 9-6"/>
+        </svg>
+      </span>
+    </h1>
+    <p class="lg-subtitle">
+      Un code à 6 chiffres a été envoyé à votre adresse
+      <strong style="color:var(--lg-text-1);">email</strong>
+    </p>
+  </div>
+
+  <form action="{% url 'utilisateur:verify_otp' %}" method="POST"
+        class="lg-form" id="otp-form" onsubmit="otpHandleSubmit(event)">
+    {% csrf_token %}
+    <input type="hidden" name="code" id="otp-hidden">
+
+    <div class="lg-field">
+      <label>Code de vérification</label>
+      <div class="lg-otp-row">
+        <input class="lg-otp-input" type="text" inputmode="numeric" maxlength="1" data-index="0" autocomplete="one-time-code" autofocus>
+        <input class="lg-otp-input" type="text" inputmode="numeric" maxlength="1" data-index="1">
+        <input class="lg-otp-input" type="text" inputmode="numeric" maxlength="1" data-index="2">
+        <input class="lg-otp-input" type="text" inputmode="numeric" maxlength="1" data-index="3">
+        <input class="lg-otp-input" type="text" inputmode="numeric" maxlength="1" data-index="4">
+        <input class="lg-otp-input" type="text" inputmode="numeric" maxlength="1" data-index="5">
+      </div>
+      <span class="lg-field-error" id="err-otp">
+        <i class="fa-solid fa-circle-exclamation"></i> Veuillez saisir le code complet
+      </span>
+    </div>
+
+    <div class="lg-info">
+      Vérifiez votre boîte de réception. Le code expire dans <span id="timer">10:00</span>.
+    </div>
+
+    <button type="submit" class="lg-submit" id="otp-submit">
+      <i class="fa-solid fa-check"></i>
+      Vérifier le code
+    </button>
+  </form>
+
+  <div class="lg-divider"></div>
+
+  <div class="lg-register-link">
+    <a href="{% url 'utilisateur:login' %}">
+      <i class="fa-solid fa-arrow-left" style="font-size:11px;"></i>
+      Retour à la connexion
+    </a>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const inputs  = Array.from(document.querySelectorAll('.lg-otp-input'));
+  const hidden  = document.getElementById('otp-hidden');
+  const errSpan = document.getElementById('err-otp');
+
+  function sync() {
+    hidden.value = inputs.map(i => i.value).join('');
+    inputs.forEach(i => i.classList.toggle('filled', i.value.length > 0));
+  }
+
+  inputs.forEach((inp, idx) => {
+    inp.addEventListener('input', e => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 1);
+      if (e.target.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+      sync();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+        inputs[idx - 1].value = '';
+        inputs[idx - 1].focus();
+        sync();
+      }
+    });
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData)
+        .getData('text').replace(/\D/g, '').slice(0, 6);
+      text.split('').forEach((c, j) => { if (inputs[j]) inputs[j].value = c; });
+      inputs[Math.min(text.length, inputs.length - 1)].focus();
+      sync();
+    });
+    inp.addEventListener('focus', e => e.target.select());
+  });
+
+  window.otpHandleSubmit = function (e) {
+    const code = hidden.value;
+    inputs.forEach(i => i.classList.remove('error'));
+    errSpan.classList.remove('show');
+    if (code.length < 6) {
+      e.preventDefault();
+      inputs.forEach(i => { if (!i.value) i.classList.add('error'); });
+      errSpan.classList.add('show');
+      return;
+    }
+    const btn = document.getElementById('otp-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Vérification…';
+    if (typeof showLoaderUser === 'function') showLoaderUser();
+  };
+
+  let secs = 600;
+  const timerEl = document.getElementById('timer');
+  const iv = setInterval(() => {
+    if (--secs <= 0) {
+      clearInterval(iv);
+      timerEl.textContent = '0:00';
+      timerEl.classList.add('expired');
+      return;
+    }
+    const m = Math.floor(secs / 60), s = secs % 60;
+    timerEl.textContent = m + ':' + String(s).padStart(2, '0');
+    if (secs <= 60) timerEl.classList.add('expired');
+  }, 1000);
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,782 @@
+{% extends 'base.html' %}
+
+{% block content_main %}
+<style>
+    :root {
+        --db-accent   : #3b5bdb;
+        --db-accent-lt: #eef2ff;
+        --db-gold     : #d6a764;
+        --db-gold-lt  : #fdf8e8;
+        --db-green    : #10b981;
+        --db-green-lt : #e6faf5;
+        --db-purple   : #8b5cf6;
+        --db-purple-lt: #f3f0ff;
+        --db-border   : #e8ecf2;
+        --db-radius   : 14px;
+        --db-shadow   : 0 1px 4px rgba(0,0,0,.06);
+    }
+
+    .m-dash { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 20px; 
+        padding-bottom: 20px;
+    }
+
+    .db-header { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .db-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 26px; 
+        font-weight: 800; 
+        color: #0d1117; 
+        letter-spacing: -0.5px;
+        margin: 0;
+    }
+
+    .db-date { 
+        font-size: 11.5px; 
+        color: #7a8499; 
+        white-space: nowrap;
+    }
+
+    /* ══ KPI ══ */
+    .kpi-view { 
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 14px; 
+    }
+
+    .block-kpi {
+        background: #fff; 
+        border: 1.5px solid var(--db-border);
+        border-radius: var(--db-radius); 
+        padding: 18px 20px;
+        box-shadow: var(--db-shadow); 
+        display: flex; 
+        flex-direction: column;
+        gap: 12px; 
+        transition: box-shadow .2s, transform .2s;
+        animation: fadeUp .35s ease both; 
+        overflow: hidden;
+        min-width: 0; /* Fix flexbox overflow */
+    }
+
+    .block-kpi:nth-child(1){animation-delay:.04s}
+    .block-kpi:nth-child(2){animation-delay:.08s}
+    .block-kpi:nth-child(3){animation-delay:.12s}
+    .block-kpi:nth-child(4){animation-delay:.16s}
+
+    @keyframes fadeUp {
+        from{opacity:0;transform:translateY(10px);}
+        to  {opacity:1;transform:translateY(0);}
+    }
+
+    .block-kpi:hover { 
+        box-shadow: 0 8px 24px rgba(0,0,0,.09); 
+        transform: translateY(-2px); 
+    }
+
+    .kpi-band { 
+        height: 4px; 
+        border-radius: 4px; 
+        margin: -18px -20px 0; 
+        margin-bottom: 8px; 
+    }
+    .band-blue   { background: linear-gradient(90deg,#4f7cff,#3b5bdb); }
+    .band-gold   { background: linear-gradient(90deg,#e1b66e,#d6a764); }
+    .band-green  { background: linear-gradient(90deg,#34d399,#10b981); }
+    .band-purple { background: linear-gradient(90deg,#a78bfa,#8b5cf6); }
+
+    .kpi-top { 
+        display: flex; 
+        align-items: flex-start; 
+        justify-content: space-between; 
+    }
+    
+    .kpi-label { 
+        font-size: 11px; 
+        color: #7a8499; 
+        font-weight: 500; 
+        margin-bottom: 5px; 
+    }
+    
+    .kpi-value { 
+        font-family: 'Syne', sans-serif; 
+        font-size: 30px; 
+        font-weight: 800; 
+        color: #0d1117; 
+        line-height: 1; 
+    }
+    
+    .kpi-icon  { 
+        width: 38px; 
+        height: 38px; 
+        border-radius: 10px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 15px; 
+        flex-shrink: 0; 
+    }
+    .kpi-icon-blue   { background: var(--db-accent-lt); color: var(--db-accent); }
+    .kpi-icon-gold   { background: var(--db-gold-lt);   color: var(--db-gold);   }
+    .kpi-icon-green  { background: var(--db-green-lt);  color: var(--db-green);  }
+    .kpi-icon-purple { background: var(--db-purple-lt); color: var(--db-purple); }
+    
+    .kpi-footer { 
+        font-size: 10.5px; 
+        color: #9aa3b2; 
+        border-top: 1px solid #f1f5f9; 
+        padding-top: 10px; 
+        display: flex; 
+        align-items: center; 
+        gap: 5px; 
+    }
+
+    /* ══ GRAPHS ══ */
+    .graph-row   { 
+        display: grid; 
+        grid-template-columns: 1fr 210px; 
+        gap: 14px; 
+        align-items: stretch; 
+    }
+    
+    .graph-row-2 { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 14px; 
+    }
+
+    .graph-card {
+        background: #fff; 
+        border: 1.5px solid var(--db-border);
+        border-radius: var(--db-radius); 
+        box-shadow: var(--db-shadow);
+        overflow: hidden; 
+        display: flex; 
+        flex-direction: column;
+        animation: fadeUp .35s .2s ease both;
+        min-width: 0;
+    }
+
+    .graph-card-head {
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+        padding: 14px 18px 12px; 
+        border-bottom: 1px solid #f1f5f9; 
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .graph-card-title { 
+        font-family: 'DM Sans', sans-serif; 
+        font-size: 13px; 
+        font-weight: 600; 
+        color: #0d1117; 
+    }
+
+    .graph-card-badge {
+        font-size: 10px; 
+        font-weight: 600; 
+        padding: 3px 10px;
+        border-radius: 20px; 
+        background: var(--db-accent-lt); 
+        color: var(--db-accent);
+    }
+
+    .graph-card-body { 
+        padding: 16px 18px; 
+        flex: 1; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        position: relative;
+    }
+    
+    .graph-card-body canvas { 
+        max-height: 220px; 
+        width: 100%;
+    }
+
+    /* ── Info panel ── */
+    .info-panel { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 10px; 
+        padding: 16px; 
+    }
+    
+    .info-panel-title { 
+        font-family: 'Syne', sans-serif; 
+        font-size: 12px; 
+        font-weight: 700; 
+        color: #0d1117; 
+    }
+    
+    .info-panel-item  { 
+        background: #f8fafc; 
+        border: 1px solid var(--db-border); 
+        border-radius: 10px; 
+        padding: 12px 14px; 
+        border-left-width: 3px; 
+    }
+    .strip-gold   { border-left-color: var(--db-gold);   }
+    .strip-green  { border-left-color: var(--db-green);  }
+    .strip-purple { border-left-color: var(--db-purple); }
+    
+    .info-panel-label { 
+        font-size: 10px; 
+        color: #9aa3b2; 
+        font-weight: 500; 
+        margin-bottom: 3px; 
+    }
+    
+    .info-panel-val   { 
+        font-family: 'Syne', sans-serif; 
+        font-size: 22px; 
+        font-weight: 800; 
+        color: #0d1117; 
+    }
+    
+    .info-panel-sub   { 
+        font-size: 10px; 
+        color: #9aa3b2; 
+        margin-top: 2px; 
+    }
+
+    /* ── Onglets vivier ── */
+    .vivier-tabs {
+        display: flex; 
+        gap: 6px;
+    }
+
+    .vivier-tab {
+        font-size: 11px; 
+        font-weight: 600; 
+        padding: 4px 12px;
+        border-radius: 20px; 
+        border: 1.5px solid var(--db-border);
+        background: #f8fafc; 
+        color: #7a8499; 
+        cursor: pointer;
+        transition: all .15s;
+        white-space: nowrap;
+    }
+
+    .vivier-tab.active {
+        background: var(--db-accent-lt);
+        border-color: var(--db-accent);
+        color: var(--db-accent);
+    }
+
+    .vivier-tab:hover:not(.active) {
+        background: #f1f5f9;
+        color: #4a5568;
+    }
+
+    .vivier-panel { 
+        display: none; 
+        width: 100%; 
+        height: 100%;
+    }
+    .vivier-panel.active { 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        width: 100%; 
+        height: 100%;
+    }
+
+    /* ── Empty ── */
+    .db-empty {
+        display: flex; 
+        flex-direction: column; 
+        align-items: center;
+        justify-content: center; 
+        color: #c0c8d8; 
+        gap: 8px;
+        min-height: 150px; 
+        width: 100%;
+    }
+    .db-empty i    { font-size: 26px; }
+    .db-empty span { font-size: 12px; }
+
+    /* ══ RESPONSIVE MEDIA QUERIES ══ */
+    
+    /* Tablettes & Petits Laptops (Max 1200px) */
+    @media (max-width: 1200px) {
+        .kpi-view {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .graph-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-panel {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        .info-panel-item {
+            flex: 1;
+            min-width: 200px;
+        }
+    }
+
+    /* Tablettes Portrait & Grands Mobiles (Max 900px) */
+    @media (max-width: 900px) {
+        .graph-row-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .db-title {
+            font-size: 22px;
+        }
+    }
+
+    /* Mobiles (Max 600px) */
+    @media (max-width: 600px) {
+        .kpi-view {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .block-kpi {
+            padding: 14px;
+        }
+        
+        .kpi-value {
+            font-size: 24px;
+        }
+        
+        .db-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .graph-card-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .graph-card-head > div:last-child {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .graph-card-head select, 
+        .graph-card-head input, 
+        .graph-card-head button {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .vivier-tabs {
+            width: 100%;
+            justify-content: flex-start;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+    }
+</style>
+
+<div class="m-dash">
+
+    <!-- Header -->
+    <div class="db-header">
+        <div>
+            <div class="db-title">Dashboard</div>
+        </div>
+        <div class="db-date" id="dash-date-label"></div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-view">
+
+        <div class="block-kpi">
+            <div class="kpi-band band-blue"></div>
+            <div class="kpi-top">
+                <div>
+                    <div class="kpi-label">Total Agents</div>
+                    <div class="kpi-value">{{ users_count }}</div>
+                </div>
+                <div class="kpi-icon kpi-icon-blue"><i class="fa-solid fa-users"></i></div>
+            </div>
+            <div class="kpi-footer"><i class="fa-solid fa-circle-info"></i> Utilisateurs actifs</div>
+        </div>
+
+        <div class="block-kpi">
+            <div class="kpi-band band-gold"></div>
+            <div class="kpi-top">
+                <div>
+                    <div class="kpi-label">Total Candidats</div>
+                    <div class="kpi-value">{{ candidats_count }}</div>
+                </div>
+                <div class="kpi-icon kpi-icon-gold"><i class="fa-solid fa-clipboard-list"></i></div>
+            </div>
+            <div class="kpi-footer"><i class="fa-solid fa-circle-info"></i> Dossiers enregistrés</div>
+        </div>
+
+        <div class="block-kpi">
+            <div class="kpi-band band-green"></div>
+            <div class="kpi-top">
+                <div>
+                    <div class="kpi-label">Analyses effectuées</div>
+                    <div class="kpi-value">{{ candidats_termin_count }}</div>
+                </div>
+                <div class="kpi-icon kpi-icon-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M4 6h16"/><path d="M6 12h8.5"/>
+                        <path d="M9 18h2"/>
+                        <path d="M15 18c0 .796 .316 1.559 .879 2.121c.563 .563 1.326 .879 2.121 .879c.796 0 1.559 -.316 2.121 -.879c.563 -.563 .879 -1.326 .879 -2.121c0 -.796 -.316 -1.559 -.879 -2.121c-.563 -.563 -1.326 -.879 -2.121 -.879c-.796 0 -1.559 .316 -2.121 .879c-.563 .563 -.879 1.326 -.879 2.121"/>
+                        <path d="M20.2 20.2l1.8 1.8"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="kpi-footer"><i class="fa-solid fa-circle-info"></i> Ce mois-ci</div>
+        </div>
+
+        <div class="block-kpi">
+            <div class="kpi-band band-purple"></div>
+            <div class="kpi-top">
+                <div>
+                    <div class="kpi-label">Rapports générés</div>
+                    <div class="kpi-value">{{ rapport_count }}</div>
+                </div>
+                <div class="kpi-icon kpi-icon-purple"><i class="fa-solid fa-file-lines"></i></div>
+            </div>
+            <div class="kpi-footer"><i class="fa-solid fa-circle-info"></i> Ce mois-ci</div>
+        </div>
+
+    </div>
+
+    <!-- GRAPH ROW 1 -->
+    <div class="graph-row">
+
+        <div class="graph-card">
+            <div class="graph-card-head">
+                <div class="graph-card-title">Évolution des candidatures</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <select id="filter-month" style="font-size:11px;padding:3px 8px;border:1px solid var(--db-border);border-radius:6px;background:#fff;color:#0d1117;cursor:pointer;">
+                        <option value="">Tous les mois</option>
+                        <option value="1">Janvier</option><option value="2">Février</option>
+                        <option value="3">Mars</option><option value="4">Avril</option>
+                        <option value="5">Mai</option><option value="6">Juin</option>
+                        <option value="7">Juillet</option><option value="8">Août</option>
+                        <option value="9">Septembre</option><option value="10">Octobre</option>
+                        <option value="11">Novembre</option><option value="12">Décembre</option>
+                    </select>
+                    <input id="filter-year" type="number" placeholder="Année" min="2020" max="2099"
+                        style="font-size:11px;padding:3px 8px;border:1px solid var(--db-border);border-radius:6px;width:72px;background:#fff;color:#0d1117;">
+                    <button onclick="applyLineFilter()"
+                            style="font-size:11px;padding:3px 10px;border:none;border-radius:6px;background:var(--db-accent);color:#fff;cursor:pointer;font-weight:600;">
+                        Focus
+                    </button>
+                    <button onclick="resetLineFilter()"
+                            style="font-size:11px;padding:3px 8px;border:1px solid var(--db-border);border-radius:6px;background:#fff;color:#7a8499;cursor:pointer;">
+                        ✕
+                    </button>
+                </div>
+            </div>
+            <div class="graph-card-body">
+                <canvas id="chart-line"></canvas>
+            </div>
+        </div>
+
+        <div class="graph-card info-panel">
+            <div class="info-panel-title">Résumé</div>
+            <div class="info-panel-item strip-gold">
+                <div class="info-panel-label">Total candidats</div>
+                <div class="info-panel-val">{{ candidats_count }}</div>
+                <div class="info-panel-sub">Dossiers actifs</div>
+            </div>
+            <div class="info-panel-item strip-green">
+                <div class="info-panel-label">Candidats du jour</div>
+                <div class="info-panel-val">{{candidats_day}}</div>
+                <div class="info-panel-sub">Reçus aujourd'hui</div>
+            </div>
+            <div class="info-panel-item strip-purple">
+                <div class="info-panel-label">Notifications non lues</div>
+                <div class="info-panel-val">{{notif_non_lue}}</div>
+                <div class="info-panel-sub">Messages en attente</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- GRAPH ROW 2 -->
+    <div class="graph-row-2">
+
+        <div class="graph-card">
+            <div class="graph-card-head">
+                <div class="graph-card-title">Répartition des analyses</div>
+                <div class="graph-card-badge">Analyse</div>
+            </div>
+            <div class="graph-card-body">
+                <canvas id="chart-pie" style="max-height:200px;max-width:200px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Distribution du vivier avec onglets -->
+        <div class="graph-card">
+            <div class="graph-card-head">
+                <div class="graph-card-title">Distribution du vivier</div>
+                <div class="vivier-tabs">
+                    <button class="vivier-tab active" onclick="switchVivierTab('secteur', this)">
+                        <i class="fa-solid fa-industry" style="font-size:10px;margin-right:4px;"></i>Secteur
+                    </button>
+                    <button class="vivier-tab" onclick="switchVivierTab('domaine', this)">
+                        <i class="fa-solid fa-code-branch" style="font-size:10px;margin-right:4px;"></i>Domaine
+                    </button>
+                </div>
+            </div>
+            <div class="graph-card-body" style="flex-direction:column;align-items:stretch; justify-content: center;">
+
+                <!-- Panel Secteur -->
+                <div class="vivier-panel active" id="panel-secteur">
+                    {% if secteur_labels %}
+                        <canvas id="chart-secteur"></canvas>
+                    {% else %}
+                        <div class="db-empty">
+                            <i class="fa-solid fa-chart-simple"></i>
+                            <span>Aucune donnée secteur</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Panel Domaine -->
+                <div class="vivier-panel" id="panel-domaine">
+                    {% if domaine_labels %}
+                        <canvas id="chart-domaine"></canvas>
+                    {% else %}
+                        <div class="db-empty">
+                            <i class="fa-solid fa-chart-simple"></i>
+                            <span>Aucune donnée domaine</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+    // ── Date header ──
+    const d = new Date();
+    document.getElementById('dash-date-label').textContent =
+        d.toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+         .replace(/^\w/, c => c.toUpperCase());
+
+    // ── Données Django ──
+    const lineLabels    = {{ line_labels|safe }};
+    const lineValues    = {{ line_values|safe }};
+    const pieLabels     = {{ pie_labels|safe }};
+    const pieValues     = {{ pie_values|safe }};
+    const pieColors     = {{ pie_colors|safe }};
+    const secteurLabels = {{ secteur_labels|safe }};
+    const secteurValues = {{ secteur_values|safe }};
+    const domaineLabels = {{ domaine_labels|safe }};
+    const domaineValues = {{ domaine_values|safe }};
+    
+    // ── Palette bar charts ──
+    const barPalette = [
+        '#3b5bdb','#4f7cff','#748ffc','#91a7ff',
+        '#d6a764','#e1b66e','#f0c98a','#f7dba0',
+        '#10b981','#34d399','#6ee7b7','#8b5cf6',
+    ];
+
+    // ── Line chart ──
+    const ctxLine = document.getElementById('chart-line');
+    let lineChart = null;
+
+    function buildLineChart(labels, values) {
+        if (lineChart) lineChart.destroy();
+        if (!ctxLine) return;
+        lineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Candidatures',
+                    data: values,
+                    borderColor: '#d6a764',
+                    backgroundColor: 'rgba(214,167,100,.12)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#0d1117',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    fill: true,
+                    tension: 0.35,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0d1117', titleColor: '#fff',
+                        bodyColor: '#d6a764', padding: 10, cornerRadius: 8,
+                    }
+                },
+                scales: {
+                    x: { grid: { color:'rgba(242,201,76,.3)' }, ticks: { font:{ size:10.5 }, color:'#7a8499' } },
+                    y: { grid: { color:'rgba(242,201,76,.25)' }, ticks: { font:{ size:10.5 }, color:'#7a8499', stepSize:1 }, beginAtZero:true }
+                }
+            }
+        });
+    }
+
+    if (lineLabels.length) buildLineChart(lineLabels, lineValues);
+
+    // ── Pie chart ──
+    const ctxPie = document.getElementById('chart-pie');
+    if (ctxPie && pieLabels.length) {
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieValues,
+                    backgroundColor: pieColors,
+                    borderColor: '#fff',
+                    borderWidth: 1,
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true, 
+                maintainAspectRatio: true,
+                cutout: '55%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font:{ size:10.5 }, color:'#4a5568', padding:12, boxWidth:10 }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0d1117', titleColor: '#fff',
+                        bodyColor: '#ccc', padding: 10, cornerRadius: 8,
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Bar chart helper ──
+    function buildBarChart(canvasId, labels, values) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+        
+        // Détruire l'ancien chart s'il existe pour éviter les bugs de resize
+        const existingChart = Chart.getChart(canvasId);
+        if(existingChart) existingChart.destroy();
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Candidats',
+                    data: values,
+                    backgroundColor: labels.map((_, i) => barPalette[i % barPalette.length]),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0d1117', titleColor: '#fff',
+                        bodyColor: '#d6a764', padding: 10, cornerRadius: 8,
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.x} candidat${ctx.parsed.x > 1 ? 's' : ''}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(0,0,0,.04)' },
+                        ticks: { font:{ size:10.5 }, color:'#7a8499', stepSize:1 },
+                        beginAtZero: true
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 10.5 }, color: '#4a5568',
+                            callback: val => {
+                                const label = labels[val] || '';
+                                return label.length > 22 ? label.slice(0, 20) + '…' : label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Construire les deux bar charts dès le chargement
+    if (secteurLabels.length) buildBarChart('chart-secteur', secteurLabels, secteurValues);
+    if (domaineLabels.length) buildBarChart('chart-domaine', domaineLabels, domaineValues);
+
+    // ── Switch onglets vivier ──
+    function switchVivierTab(tab, btn) {
+        document.querySelectorAll('.vivier-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.vivier-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + tab).classList.add('active');
+    }
+
+    // ── Filtre line chart ──
+    const moisIndex = {
+        "Jan":1,"Fév":2,"Mar":3,"Avr":4,"Mai":5,"Jun":6,
+        "Jul":7,"Aoû":8,"Sep":9,"Oct":10,"Nov":11,"Déc":12
+    };
+
+    function applyLineFilter() {
+        const month = parseInt(document.getElementById('filter-month').value) || null;
+        const year  = parseInt(document.getElementById('filter-year').value)  || null;
+        if (!month && !year) { buildLineChart(lineLabels, lineValues); return; }
+        const filtered = lineLabels.reduce((acc, label, i) => {
+            const parts = label.split(' ');
+            const matchM = !month || moisIndex[parts[0]] === month;
+            const matchY = !year  || parseInt(parts[1]) === year;
+            if (matchM && matchY) acc.push({ label, value: lineValues[i] });
+            return acc;
+        }, []);
+        filtered.length
+            ? buildLineChart(filtered.map(f => f.label), filtered.map(f => f.value))
+            : buildLineChart(['Aucune donnée'], [0]);
+    }
+
+    function resetLineFilter() {
+        document.getElementById('filter-month').value = '';
+        document.getElementById('filter-year').value  = '';
+        buildLineChart(lineLabels, lineValues);
+    }
+</script>
+
+{% endblock %}

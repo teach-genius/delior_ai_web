@@ -1,0 +1,959 @@
+<style>
+    #modal-form {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(10,15,30,.55);
+        backdrop-filter: blur(3px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 15px; /* Marge de sécurité sur mobile */
+        box-sizing: border-box;
+    }
+
+    #form-offre {
+        position: relative;
+        width: 780px;
+        max-width: 100%; /* Prend toute la largeur disponible si nécessaire */
+        max-height: 90vh;
+        background: #f5f6fa;
+        border-radius: 16px;
+        border: 1.5px solid #e4e9f2;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    #form-offre::-webkit-scrollbar { width: 0; }
+
+    .modal-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #0a0f1e;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 14px 14px 0 0;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .modal-top::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b5bdb, #8b5cf6, #f472b6);
+    }
+
+    .modal-top::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 10% 50%, rgba(59,91,219,.2) 0%, transparent 60%),
+                    radial-gradient(ellipse at 90% 50%, rgba(139,92,246,.12) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .modal-top-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+        min-width: 0; /* Permet au texte de se réduire */
+    }
+
+    .modal-top-icon {
+        width: 34px; height: 34px;
+        border-radius: 9px;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.12);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .modal-top-icon i { font-size: 13px; color: #fff; }
+
+    .modal-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 14px; font-weight: 800;
+        color: #ffffff; letter-spacing: -0.3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .modal-subtitle {
+        font-size: 10.5px;
+        color: rgba(255,255,255,.4);
+        margin-top: 2px;
+        display: none; /* Caché sur très petits écrans par défaut, visible via media query si besoin */
+    }
+
+    .modal-close {
+        position: relative; z-index: 1;
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.12);
+        color: rgba(255,255,255,.6);
+        font-size: 14px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: background .15s, border-color .15s, color .15s;
+        flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+        background: rgba(244,63,94,.25);
+        border-color: rgba(244,63,94,.4);
+        color: #f43f5e;
+    }
+
+    .modal-body {
+        padding: 20px 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .fm-section {
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .fm-section-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: #f8fafd;
+        border-bottom: 1.5px solid #e4e9f2;
+        flex-wrap: wrap; /* Permet au badge de passer à la ligne si besoin */
+    }
+
+    .fm-section-icon {
+        width: 26px; height: 26px;
+        border-radius: 7px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; flex-shrink: 0;
+    }
+
+    .ic-blue   { background: #eef2ff; color: #3b5bdb; }
+    .ic-gold   { background: #fdf8e8; color: #d6a764; }
+    .ic-green  { background: #e6faf5; color: #10b981; }
+    .ic-purple { background: #f3f0ff; color: #8b5cf6; }
+    .ic-pink   { background: #fff0f4; color: #f43f5e; }
+    .ic-teal   { background: #e0f7fa; color: #00acc1; }
+    .ic-orange { background: #fff3e0; color: #fb8c00; }
+
+    .fm-section-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 12px; font-weight: 700;
+        color: #0d1117;
+    }
+
+    .fm-section-badge {
+        margin-left: auto;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: #fdf2e0;
+        border: 1px solid #f0d090;
+        color: #c4924d;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+    .fm-section-body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .fm-row { 
+        display: flex; 
+        gap: 12px; 
+        align-items: flex-start; 
+    }
+
+    .fm-group {
+        display: flex; flex-direction: column;
+        gap: 5px; flex: 1;
+        min-width: 0; /* Empêche le débordement des inputs */
+    }
+
+    .fm-label {
+        font-size: 11px; font-weight: 600;
+        color: #374151; letter-spacing: 0.2px;
+    }
+
+    .fm-label-discriminant {
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .fm-label-discriminant::after {
+        content: '⚡';
+        font-size: 9px;
+        opacity: .6;
+    }
+
+    .fm-hint {
+        font-size: 10px; color: #a0aab8;
+        margin-top: -2px;
+    }
+
+    .fm-input,
+    .fm-select,
+    .fm-textarea {
+        width: 100%;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 9px;
+        padding: 8px 12px;
+        font-size: 12.5px; font-family: inherit;
+        color: #0d1117; background: #f8fafd;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+        box-sizing: border-box;
+    }
+
+    .fm-input:focus,
+    .fm-select:focus,
+    .fm-textarea:focus {
+        border-color: #3b5bdb;
+        box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+        background: #fff;
+    }
+
+    .fm-input-key {
+        border-color: #e8d9b8;
+        background: #fdfaf5;
+    }
+    .fm-input-key:focus {
+        border-color: #d6a764;
+        box-shadow: 0 0 0 3px rgba(214,167,100,.12);
+        background: #fff;
+    }
+
+    .fm-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+    .fm-tags-wrap {
+        display: flex; flex-wrap: wrap;
+        gap: 6px; align-items: center;
+        min-height: 40px;
+        border: 1.5px solid #e4e9f2;
+        border-radius: 9px;
+        padding: 6px 10px;
+        background: #f8fafd;
+        cursor: text;
+        transition: border-color .2s, box-shadow .2s;
+        box-sizing: border-box;
+    }
+
+    .fm-tags-wrap:focus-within {
+        border-color: #3b5bdb;
+        box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+        background: #fff;
+    }
+
+    .fm-tag {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: #eef2ff; border: 1px solid #c5d0f7;
+        color: #3b5bdb; border-radius: 6px;
+        padding: 3px 8px; font-size: 11.5px; font-weight: 600;
+    }
+
+    .fm-tag-remove {
+        cursor: pointer; color: #8a94a6;
+        font-size: 10px; line-height: 1;
+        background: none; border: none; padding: 0;
+        transition: color .15s;
+    }
+
+    .fm-tag-remove:hover { color: #f43f5e; }
+
+    .fm-tags-input {
+        border: none; outline: none; background: transparent;
+        font-size: 12px; font-family: inherit;
+        color: #0d1117; min-width: 120px; flex: 1;
+    }
+
+    .fm-tags-input::placeholder { color: #a0aab8; }
+
+    .fm-check-group {
+        display: flex; flex-wrap: wrap; gap: 10px;
+    }
+
+    .fm-check-item {
+        display: flex; align-items: center; gap: 6px; cursor: pointer;
+    }
+
+    .fm-check-item input[type="checkbox"] {
+        width: 15px; height: 15px;
+        accent-color: #3b5bdb; cursor: pointer; flex-shrink: 0;
+    }
+
+    .fm-check-item span { font-size: 12px; color: #374151; cursor: pointer; }
+
+    .fm-dyn-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .fm-dyn-item {
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .fm-dyn-item i { color: #3b5bdb; font-size: 11px; flex-shrink: 0; }
+
+    .btn-remove {
+        width: 26px; height: 26px; border-radius: 50%;
+        border: 1.5px solid #fecdd3; background: #fff0f4;
+        color: #f43f5e; font-size: 11px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; flex-shrink: 0; transition: background .15s;
+    }
+
+    .btn-remove:hover { background: #fecdd3; }
+
+    .lang-row { display: flex; gap: 8px; align-items: center; }
+    .lang-row .fm-select { flex: 1; }
+
+    .btn-add-item {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 14px; border-radius: 9px;
+        border: 1.5px dashed #c5d0f7; background: #eef2ff;
+        color: #3b5bdb; font-size: 12px; font-weight: 500;
+        font-family: inherit; cursor: pointer;
+        transition: background .15s, border-color .15s;
+        width: fit-content;
+    }
+
+    .btn-add-item:hover { background: #e0e8ff; border-color: #3b5bdb; }
+
+    .modal-footer {
+        padding: 14px 24px;
+        border-top: 1.5px solid #e4e9f2;
+        display: flex; align-items: center;
+        justify-content: flex-end; gap: 10px;
+        background: #ffffff; flex-shrink: 0;
+        flex-wrap: wrap; /* Permet aux boutons de passer à la ligne sur très petit écran */
+    }
+
+    .btn-cancel {
+        padding: 9px 20px; border-radius: 9px;
+        border: 1.5px solid #e4e9f2; background: #f8fafd;
+        color: #374151; font-family: 'DM Sans', sans-serif;
+        font-size: 12.5px; font-weight: 500; cursor: pointer;
+        transition: background .15s;
+    }
+
+    .btn-cancel:hover { background: #f1f5f9; }
+
+    .btn-save {
+        padding: 9px 28px; border-radius: 9px;
+        border: none; background: #d6a764; color: #ffffff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12.5px; font-weight: 600; cursor: pointer;
+        transition: background .15s, transform .1s;
+        display: flex; align-items: center; gap: 7px;
+    }
+
+    .btn-save:hover  { background: #c4924d; }
+    .btn-save:active { transform: scale(0.97); }
+
+    .fm-discriminant-legend {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10.5px;
+        color: #c4924d;
+        padding: 6px 10px;
+        background: #fdfaf5;
+        border: 1px solid #f0d090;
+        border-radius: 8px;
+        margin-bottom: 2px;
+    }
+    .fm-discriminant-legend i { font-size: 10px; }
+
+    .fm-error {
+        border-color: #f43f5e !important;
+        box-shadow: 0 0 0 3px rgba(244,63,94,.1) !important;
+    }
+
+    /* ═══════════════════════════════════
+       RESPONSIVE MEDIA QUERIES
+    ═══════════════════════════════════ */
+    
+    /* Tablettes et petits écrans landscape */
+    @media (max-width: 768px) {
+        .modal-top {
+            padding: 12px 16px;
+        }
+        
+        .modal-subtitle {
+            display: none; /* On cache le sous-titre pour gagner de la place */
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .fm-section-body {
+            padding: 12px;
+        }
+
+        /* Les lignes deviennent des colonnes */
+        .fm-row {
+            flex-direction: column;
+            gap: 14px;
+        }
+    }
+
+    /* Mobiles */
+    @media (max-width: 480px) {
+        #modal-form {
+            padding: 0;
+            align-items: flex-end; /* Modal collé en bas sur mobile comme une sheet */
+        }
+
+        #form-offre {
+            max-width: 100%;
+            width: 100%;
+            max-height: 95vh;
+            border-radius: 16px 16px 0 0;
+            border: none;
+            border-top: 1.5px solid #e4e9f2;
+        }
+
+        .modal-top {
+            border-radius: 16px 16px 0 0;
+            padding: 14px;
+        }
+
+        .modal-title {
+            font-size: 13px;
+        }
+
+        .modal-close {
+            width: 28px; height: 28px;
+            font-size: 12px;
+        }
+
+        .modal-body {
+            padding: 14px;
+        }
+
+        .fm-section-head {
+            padding: 10px 12px;
+        }
+
+        .fm-section-body {
+            padding: 12px;
+        }
+
+        .fm-check-group {
+            gap: 8px;
+        }
+
+        .fm-check-item span {
+            font-size: 11px;
+        }
+
+        .lang-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .modal-footer {
+            padding: 12px 14px;
+            flex-direction: column-reverse; /* Bouton principal en haut sur mobile */
+            gap: 8px;
+        }
+
+        .btn-cancel, .btn-save {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 20px;
+        }
+    }
+</style>
+
+<div id="modal-form">
+    <div id="form-offre">
+
+        <div class="modal-top">
+            <div class="modal-top-left">
+                <div class="modal-top-icon">
+                    <i class="fa-solid fa-file-contract"></i>
+                </div>
+                <div>
+                    <div class="modal-title">Créer une offre d'emploi</div>
+                    <div class="modal-subtitle">Remplissez les informations pour lancer le matching IA</div>
+                </div>
+            </div>
+            <div class="modal-close" onclick="closeforme()">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+        </div>
+
+        <div class="modal-body">
+
+            <div class="fm-discriminant-legend">
+                <i class="fa-solid fa-bolt"></i>
+                Les champs marqués <strong>⚡</strong> sont des <strong>ancres discriminantes</strong> — ils filtrent activement les profils hors-domaine lors du matching IA.
+            </div>
+
+            <!-- Section 1 — Poste -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-blue"><i class="fa-solid fa-briefcase"></i></div>
+                    <div class="fm-section-title">Détails du Poste</div>
+                    <span class="fm-section-badge">Ancres principales</span>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-group">
+                        <label class="fm-label">Titre Professionnel <span style="color:#f43f5e">*</span></label>
+                        <div class="fm-hint">Ancre principale pour l'embedding sémantique</div>
+                        <input type="text" class="fm-input" id="fo-titre"
+                               placeholder="ex : Développeur Full Stack React / Django">
+                    </div>
+                    <div class="fm-row">
+                        <div class="fm-group">
+                            <label class="fm-label fm-label-discriminant">Domaine Métier</label>
+                            <div class="fm-hint">Filtre — élimine les profils hors-domaine</div>
+                            <select class="fm-select fm-input-key" id="fo-domaine">
+                                <option value="">— Choisir un domaine —</option>
+                                {% if domaines %}
+                                    {% for domaine in domaines %}
+                                        <option>{{ domaine }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                                <option>Autre</option>
+                            </select>
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label fm-label-discriminant">Secteur d'Activité</label>
+                            <div class="fm-hint">Complémente le domaine pour affiner le matching</div>
+                            <select class="fm-select fm-input-key" id="fo-secteur">
+                                <option value="">— Choisir un secteur —</option>
+                                {% if secteurs %}
+                                    {% for secteur in secteurs %}
+                                        <option>{{ secteur }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                                <option>Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fm-row">
+                        <div class="fm-group">
+                            <label class="fm-label">Localisation</label>
+                            <input type="text" class="fm-input" id="fo-localisation"
+                                   placeholder="ex : Casablanca">
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label">Type de Contrat</label>
+                            <select class="fm-select" id="fo-contrat">
+                                <option value="">— Choisir —</option>
+                                <option>CDI</option>
+                                <option>CDD</option>
+                                <option>Freelance</option>
+                                <option>Stage</option>
+                                <option>Alternance</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2 — Profil -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-gold"><i class="fa-solid fa-user-tie"></i></div>
+                    <div class="fm-section-title">Profil Recherché</div>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-group">
+                        <label class="fm-label">Description libre du profil</label>
+                        <div class="fm-hint">Mentionnez le domaine et le secteur pour renforcer le signal sémantique</div>
+                        <textarea class="fm-textarea" id="fo-profil"
+                                  placeholder="Ex : Nous recherchons un développeur web Full Stack dans le secteur fintech…"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3 — Formation -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-purple"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div class="fm-section-title">Formation Requise</div>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-group">
+                        <label class="fm-label">Niveau de diplôme</label>
+                        <!-- FIX: id dédié formation-checks pour éviter collision avec se-checks -->
+                        <div class="fm-check-group" id="formation-checks">
+                            <label class="fm-check-item"><input type="checkbox" value="Bac+2"><span>Bac+2</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Bac+3"><span>Bac+3</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Bac+5"><span>Bac+5</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Doctorat"><span>Doctorat</span></label>
+                        </div>
+                    </div>
+                    <div class="fm-group">
+                        <label class="fm-label">Autre / Préciser</label>
+                        <input type="text" class="fm-input" id="fo-formation-autre"
+                               placeholder="ex : Licence professionnelle, École d'ingénieur…">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4 — Expérience -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-green"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="fm-section-title">Expérience Requise</div>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-row">
+                        <div class="fm-group">
+                            <label class="fm-label">Poste occupé</label>
+                            <input type="text" class="fm-input" id="fo-exp-poste"
+                                   placeholder="ex : Développeur Backend, Chef de projet…">
+                        </div>
+                        <div class="fm-group">
+                            <label class="fm-label">Années d'expérience</label>
+                            <select class="fm-select" id="fo-exp-annees">
+                                <option value="">— Choisir —</option>
+                                <option>Débutant (0–1 an)</option>
+                                <option>Junior (1–3 ans)</option>
+                                <option>Confirmé (3–5 ans)</option>
+                                <option>Senior (5+ ans)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fm-group">
+                        <label class="fm-label">Missions attendues</label>
+                        <div class="fm-hint">Chaque mission améliore la précision du matching</div>
+                        <div class="fm-dyn-list" id="missions-list">
+                            <div class="fm-dyn-item">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                <input type="text" class="fm-input" placeholder="ex : Développer des APIs REST performantes">
+                                <button class="btn-remove" type="button" onclick="removeItem(this)"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn-add-item" type="button" style="margin-top:8px;" onclick="addMission()">
+                            <i class="fa-solid fa-plus"></i> Ajouter une mission
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5 — Compétences -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-teal"><i class="fa-solid fa-star"></i></div>
+                    <div class="fm-section-title">Compétences Requises</div>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-group">
+                        <label class="fm-label">Savoir-Faire & Outils Techniques</label>
+                        <div class="fm-hint">Appuyez sur Entrée ou virgule pour ajouter un tag</div>
+                        <div class="fm-tags-wrap" id="sf-tags-wrap" onclick="document.getElementById('sf-input').focus()">
+                            <input type="text" class="fm-tags-input" id="sf-input"
+                                   placeholder="ex : Python, React, Docker…"
+                                   onkeydown="handleTagInput(event,'sf-tags-wrap','sf-input')">
+                        </div>
+                    </div>
+                    <div class="fm-group">
+                        <label class="fm-label">Savoir-Être</label>
+                        <!-- FIX: id dédié se-checks -->
+                        <div class="fm-check-group" id="se-checks">
+                            <label class="fm-check-item"><input type="checkbox" value="Esprit d'équipe"><span>Esprit d'équipe</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Autonomie"><span>Autonomie</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Leadership"><span>Leadership</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Rigueur"><span>Rigueur</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Créativité"><span>Créativité</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Adaptabilité"><span>Adaptabilité</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Communication"><span>Communication</span></label>
+                            <label class="fm-check-item"><input type="checkbox" value="Proactivité"><span>Proactivité</span></label>
+                        </div>
+                    </div>
+                    <div class="fm-group">
+                        <label class="fm-label">Langues</label>
+                        <div class="fm-dyn-list" id="langues-list">
+                            <div class="lang-row">
+                                <select class="fm-select">
+                                    <option value="Français">Français</option>
+                                    <option value="Anglais">Anglais</option>
+                                    <option value="Arabe">Arabe</option>
+                                    <option value="Espagnol">Espagnol</option>
+                                    <option value="Allemand">Allemand</option>
+                                </select>
+                                <select class="fm-select">
+                                    <option value="Débutant">Débutant</option>
+                                    <option value="Intermédiaire">Intermédiaire</option>
+                                    <option value="Courant">Courant</option>
+                                    <option value="Bilingue">Bilingue</option>
+                                </select>
+                                <button class="btn-remove" type="button" onclick="removeItem(this)"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn-add-item" type="button" style="margin-top:8px;" onclick="addLangue()">
+                            <i class="fa-solid fa-plus"></i> Ajouter langue
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6 — Projets -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-orange"><i class="fa-solid fa-diagram-project"></i></div>
+                    <div class="fm-section-title">Projets Valorisés</div>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-dyn-list" id="projets-list"></div>
+                    <button class="btn-add-item" type="button" onclick="addProjet()">
+                        <i class="fa-solid fa-plus"></i> Ajouter un projet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 7 — Certifications -->
+            <div class="fm-section">
+                <div class="fm-section-head">
+                    <div class="fm-section-icon ic-pink"><i class="fa-solid fa-certificate"></i></div>
+                    <div class="fm-section-title">Certifications Valorisées</div>
+                </div>
+                <div class="fm-section-body">
+                    <div class="fm-dyn-list" id="certifs-list"></div>
+                    <button class="btn-add-item" type="button" onclick="addCertif()">
+                        <i class="fa-solid fa-plus"></i> Ajouter une certification
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" type="button" onclick="closeforme()">Annuler</button>
+            <button class="btn-save" type="button" onclick="anSaveOffre()">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Enregistrer & Lancer le matching
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ── Helpers DOM ── */
+    function removeItem(btn) {
+        btn.closest('.fm-dyn-item, .lang-row').remove();
+    }
+
+    function addMission() {
+        const list = document.getElementById('missions-list');
+        const div  = document.createElement('div');
+        div.className = 'fm-dyn-item';
+        div.innerHTML = `
+            <i class="fa-solid fa-circle-dot"></i>
+            <input type="text" class="fm-input" placeholder="Mission ${list.children.length + 1}">
+            <button class="btn-remove" type="button" onclick="removeItem(this)"><i class="fa-solid fa-xmark"></i></button>`;
+        list.appendChild(div);
+        div.querySelector('input').focus();
+    }
+
+    function addLangue() {
+        const list = document.getElementById('langues-list');
+        const div  = document.createElement('div');
+        div.className = 'lang-row';
+        div.innerHTML = `
+            <select class="fm-select">
+                <option value="Français">Français</option>
+                <option value="Anglais">Anglais</option>
+                <option value="Arabe">Arabe</option>
+                <option value="Espagnol">Espagnol</option>
+                <option value="Allemand">Allemand</option>
+            </select>
+            <select class="fm-select">
+                <option value="Débutant">Débutant</option>
+                <option value="Intermédiaire">Intermédiaire</option>
+                <option value="Courant">Courant</option>
+                <option value="Bilingue">Bilingue</option>
+            </select>
+            <button class="btn-remove" type="button" onclick="removeItem(this)"><i class="fa-solid fa-xmark"></i></button>`;
+        list.appendChild(div);
+    }
+
+    function addProjet() {
+        const list = document.getElementById('projets-list');
+        const div  = document.createElement('div');
+        div.className = 'fm-dyn-item';
+        div.innerHTML = `
+            <i class="fa-solid fa-circle-dot"></i>
+            <input type="text" class="fm-input" placeholder="ex : Migration cloud, Refonte e-commerce…">
+            <button class="btn-remove" type="button" onclick="removeItem(this)"><i class="fa-solid fa-xmark"></i></button>`;
+        list.appendChild(div);
+        div.querySelector('input').focus();
+    }
+
+    function addCertif() {
+        const list = document.getElementById('certifs-list');
+        const div  = document.createElement('div');
+        div.className = 'fm-dyn-item';
+        div.innerHTML = `
+            <i class="fa-solid fa-circle-dot"></i>
+            <input type="text" class="fm-input" placeholder="ex : PMP, AWS Certified, TOEIC…">
+            <button class="btn-remove" type="button" onclick="removeItem(this)"><i class="fa-solid fa-xmark"></i></button>`;
+        list.appendChild(div);
+        div.querySelector('input').focus();
+    }
+
+    /* ── Tags ── */
+    function handleTagInput(e, wrapId, inputId) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const input = document.getElementById(inputId);
+            const val   = input.value.replace(',', '').trim();
+            if (val) addTag(wrapId, inputId, val);
+            input.value = '';
+        } else if (e.key === 'Backspace') {
+            const input = document.getElementById(inputId);
+            if (!input.value) {
+                const tags = document.querySelectorAll(`#${wrapId} .fm-tag`);
+                if (tags.length) tags[tags.length - 1].remove();
+            }
+        }
+    }
+
+    function addTag(wrapId, inputId, value) {
+        const wrap  = document.getElementById(wrapId);
+        const input = document.getElementById(inputId);
+        const tag   = document.createElement('span');
+        tag.className   = 'fm-tag';
+        tag.dataset.val = value;
+        tag.innerHTML   = `${value}<button class="fm-tag-remove" type="button" onclick="this.parentElement.remove()">✕</button>`;
+        wrap.insertBefore(tag, input);
+    }
+
+    function getTagValues(wrapId) {
+        return [...document.querySelectorAll(`#${wrapId} .fm-tag`)]
+            .map(t => t.dataset.val).filter(Boolean);
+    }
+
+    /* ── Collect — produit exactement le dict attendu par la view Django ── */
+    function anCollectOffre() {
+        // ── Poste ──
+        const titre    = (document.getElementById('fo-titre')?.value       || '').trim();
+        const domaine  = (document.getElementById('fo-domaine')?.value     || '').trim();
+        const secteur  = (document.getElementById('fo-secteur')?.value     || '').trim();
+        const localisa = (document.getElementById('fo-localisation')?.value|| '').trim();
+        const contrat  = (document.getElementById('fo-contrat')?.value     || '').trim();
+
+        // ── Profil ──
+        const profil = (document.getElementById('fo-profil')?.value || '').trim();
+
+        // ── Formation — FIX: ciblage par id dédié ──
+        const formations = [...document.querySelectorAll('#formation-checks input[type=checkbox]:checked')]
+            .map(c => c.value).filter(Boolean);
+        const autreForm = (document.getElementById('fo-formation-autre')?.value || '').trim();
+        if (autreForm) formations.push(autreForm);
+
+        // ── Expérience ──
+        const posteExp  = (document.getElementById('fo-exp-poste')?.value  || '').trim();
+        const anneesExp = (document.getElementById('fo-exp-annees')?.value || '').trim();
+        const missions  = [...document.querySelectorAll('#missions-list .fm-dyn-item input')]
+            .map(i => i.value.trim()).filter(Boolean);
+
+        // ── Compétences — FIX: ciblage par id dédié ──
+        const sfTags    = getTagValues('sf-tags-wrap');
+        const seChecked = [...document.querySelectorAll('#se-checks input[type=checkbox]:checked')]
+            .map(c => c.value).filter(Boolean);
+
+        // ── Langues ──
+        const langues = [...document.querySelectorAll('#langues-list .lang-row')].map(row => {
+            const sels = row.querySelectorAll('select');
+            return {
+                langue: sels[0]?.value || '',
+                niveau: sels[1]?.value || ''
+            };
+        }).filter(l => l.langue);
+
+        // ── Projets & Certifs ──
+        const projets = [...document.querySelectorAll('#projets-list .fm-dyn-item input')]
+            .map(i => i.value.trim()).filter(Boolean);
+        const certifs = [...document.querySelectorAll('#certifs-list .fm-dyn-item input')]
+            .map(i => i.value.trim()).filter(Boolean);
+
+        // ── Objet final — structure identique au dict Python attendu ──
+        return {
+            poste: {
+                titre_professionnel: titre,
+                domaine:             domaine,
+                localisation:        localisa,
+                type_contrat:        contrat,
+            },
+            secteur_activite:  secteur,
+            profil_recherche:  profil,
+            formation_requise: formations,
+            experience_requise: [
+                {
+                    poste:              posteExp,
+                    annees_experience:  anneesExp,
+                    missions_attendues: missions,
+                }
+            ],
+            competences_requises: {
+                savoir_faire: sfTags,
+                savoir_etre:  seChecked,
+                langues:      langues,
+            },
+            projets_valorises:         projets,
+            certifications_valorisees: certifs,
+        };
+    }
+
+    /* ── Validation ── */
+    function anValidateOffre() {
+        const titre = document.getElementById('fo-titre');
+        if (!titre?.value.trim()) {
+            titre.classList.add('fm-error');
+            titre.focus();
+            setTimeout(() => titre.classList.remove('fm-error'), 1500);
+            return false;
+        }
+        return true;
+    }
+
+    /* ── Save → envoie {"offre": {...}} au backend ── */
+    function anSaveOffre() {
+        if (!anValidateOffre()) return;
+        const offre = anCollectOffre();
+        if (typeof anOnOffreSaved === 'function') anOnOffreSaved(offre);
+    }
+
+    /* ── Reset complet du formulaire ── */
+    function anResetOffre() {
+        ['fo-titre','fo-domaine','fo-secteur','fo-localisation',
+         'fo-contrat','fo-profil','fo-formation-autre',
+         'fo-exp-poste','fo-exp-annees'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.querySelectorAll('#formation-checks input, #se-checks input')
+            .forEach(cb => cb.checked = false);
+        document.getElementById('missions-list').innerHTML = '';
+        document.getElementById('langues-list').innerHTML  = '';
+        document.getElementById('projets-list').innerHTML  = '';
+        document.getElementById('certifs-list').innerHTML  = '';
+        document.querySelectorAll('#sf-tags-wrap .fm-tag').forEach(t => t.remove());
+    }
+</script>

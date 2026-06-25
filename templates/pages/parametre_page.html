@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paramètres{% endblock %}
+
+{% block content_main %}
+<style>
+  :root {
+    --pm-accent: #3b5bdb;
+    --pm-accent-light: #eef2ff;
+    --pm-border: #e4e9f2;
+    --pm-radius: 16px;
+    --pm-shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --pm-text-1: #0d1117;
+    --pm-text-2: #4a5568;
+    --pm-text-3: #8a94a6;
+  }
+
+  .pm-page { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+    padding-bottom: 40px; 
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .pm-header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    flex-wrap: wrap; 
+    gap: 12px; 
+  }
+
+  .pm-title-group { display: flex; align-items: center; gap: 10px; }
+  
+  .pm-title { 
+    font-family: 'Syne', sans-serif; 
+    font-size: 22px; 
+    font-weight: 800; 
+    color: var(--pm-text-1); 
+    letter-spacing: -0.5px; 
+    margin: 0; 
+  }
+
+  /* Grille Responsive Automatique */
+  .pm-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+    gap: 20px; 
+    width: 100%;
+  }
+
+  .pm-grid.full { grid-template-columns: 1fr; }
+
+  .pm-card {
+    background: #fff; 
+    border: 1.5px solid var(--pm-border);
+    border-radius: var(--pm-radius); 
+    box-shadow: var(--pm-shadow-sm);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .pm-card-head {
+    display: flex; 
+    align-items: center; 
+    gap: 10px;
+    padding: 14px 20px; 
+    border-bottom: 1.5px solid var(--pm-border);
+    background: #f8fafd;
+    flex-wrap: wrap;
+  }
+
+  .pm-card-icon {
+    width: 32px; height: 32px; 
+    border-radius: 8px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 13px; 
+    flex-shrink: 0;
+  }
+  .pm-card-icon.blue   { background: #E6F1FB; color: #0C447C; }
+  .pm-card-icon.green  { background: #ecfdf5; color: #059669; }
+  .pm-card-icon.orange { background: #fff7ed; color: #c2410c; }
+  .pm-card-icon.purple { background: #EEEDFE; color: #3C3489; }
+
+  .pm-card-title { font-size: 13px; font-weight: 600; color: var(--pm-text-1); }
+  .pm-card-sub   { font-size: 11px; color: var(--pm-text-3); }
+
+  .pm-card-body { 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 14px; 
+    flex: 1;
+  }
+
+  .pm-field { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+  
+  .pm-field label {
+    font-size: 10px; 
+    font-weight: 700; 
+    text-transform: uppercase;
+    letter-spacing: 0.6px; 
+    color: var(--pm-text-3);
+  }
+
+  .pm-field input[type="email"],
+  .pm-field input[type="text"],
+  .pm-field input[type="password"],
+  .pm-field input[type="number"] {
+    height: 38px; 
+    border: 1.5px solid var(--pm-border); 
+    border-radius: 10px;
+    padding: 0 12px; 
+    font-size: 13px; 
+    font-family: inherit; 
+    color: var(--pm-text-1);
+    background: #fff; 
+    outline: none; 
+    transition: border-color .2s, box-shadow .2s;
+    width: 100%; 
+    box-sizing: border-box;
+  }
+
+  .pm-field input:focus {
+    border-color: var(--pm-accent);
+    box-shadow: 0 0 0 3px rgba(59,91,219,.08);
+  }
+
+  .pm-field .pm-hint { font-size: 10.5px; color: var(--pm-text-3); }
+
+  .pm-pwd-wrap { position: relative; width: 100%; }
+  .pm-pwd-wrap input { padding-right: 38px; }
+  
+  .pm-pwd-toggle {
+    position: absolute; 
+    right: 11px; 
+    top: 50%; 
+    transform: translateY(-50%);
+    color: var(--pm-text-3); 
+    cursor: pointer; 
+    font-size: 13px; 
+    transition: color .15s;
+    z-index: 2;
+  }
+  .pm-pwd-toggle:hover { color: var(--pm-accent); }
+
+  /* Toggle switch */
+  .pm-toggle-row {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 12px 14px; 
+    background: #f8fafd;
+    border: 1.5px solid var(--pm-border); 
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .pm-toggle-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .pm-toggle-label { font-size: 12.5px; font-weight: 600; color: var(--pm-text-1); }
+  .pm-toggle-sub   { font-size: 11px; color: var(--pm-text-3); }
+
+  .pm-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .pm-switch input { opacity: 0; width: 0; height: 0; }
+  
+  .pm-slider {
+    position: absolute; 
+    cursor: pointer; 
+    inset: 0;
+    background: #d0d8ea; 
+    border-radius: 22px; 
+    transition: .3s;
+  }
+  
+  .pm-slider::before {
+    content: ''; 
+    position: absolute; 
+    width: 16px; 
+    height: 16px;
+    left: 3px; 
+    bottom: 3px; 
+    background: #fff; 
+    border-radius: 50%; 
+    transition: .3s;
+  }
+  
+  .pm-switch input:checked + .pm-slider { background: #3b5bdb; }
+  .pm-switch input:checked + .pm-slider::before { transform: translateX(18px); }
+
+  /* Status badges */
+  .pm-status {
+    display: inline-flex; 
+    align-items: center; 
+    gap: 5px;
+    padding: 3px 10px; 
+    border-radius: 20px; 
+    font-size: 10.5px;
+    font-weight: 600; 
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .pm-status i { font-size: 7px; }
+  .pm-status.active   { background: #ecfdf5; border-color: #a7f3d0; color: #059669; }
+  .pm-status.inactive { background: #fff0f3; border-color: #fda4af; color: #e11d48; }
+
+  /* Boutons */
+  .pm-btn {
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px;
+    padding: 0 18px; 
+    height: 38px; 
+    border-radius: 10px;
+    font-size: 12px; 
+    font-weight: 600; 
+    font-family: inherit;
+    cursor: pointer; 
+    transition: all .15s; 
+    border: 1.5px solid;
+    white-space: nowrap;
+    justify-content: center;
+  }
+  .pm-btn:active { transform: scale(0.97); }
+  .pm-btn-primary { background: #3b5bdb; border-color: #3b5bdb; color: #fff; }
+  .pm-btn-primary:hover { background: #2f4cc0; }
+  .pm-btn-ghost { background: #f8fafd; border-color: var(--pm-border); color: var(--pm-text-2); }
+  .pm-btn-ghost:hover { background: #eef2ff; border-color: #c5d0f7; color: var(--pm-accent); }
+  .pm-btn-danger { background: #fff0f3; border-color: #fda4af; color: #e11d48; }
+  .pm-btn-danger:hover { background: #ffe4e6; }
+
+  .pm-card-footer {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 14px 20px; 
+    border-top: 1.5px solid var(--pm-border);
+    background: #f8fafd;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pm-feedback {
+    padding: 10px 14px; 
+    border-radius: 10px; 
+    font-size: 12px;
+    font-weight: 600; 
+    display: none; 
+    align-items: center; 
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .pm-feedback.success {
+    background: #ecfdf5; 
+    border: 1.5px solid #6ee7b7; 
+    color: #059669; 
+    display: flex;
+  }
+  .pm-feedback.error {
+    background: #fff0f3; 
+    border: 1.5px solid #fda4af; 
+    color: #e11d48; 
+    display: flex;
+  }
+
+  /* Jobs status */
+  .pm-jobs { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  
+  .pm-job-row {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 12px 14px; 
+    border: 1.5px solid var(--pm-border);
+    border-radius: 12px; 
+    background: #fff;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pm-job-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  
+  .pm-job-dot {
+    width: 8px; height: 8px; 
+    border-radius: 50%; 
+    flex-shrink: 0;
+  }
+  .pm-job-dot.active   { background: #059669; box-shadow: 0 0 0 3px #d1fae5; }
+  .pm-job-dot.inactive { background: #e11d48; box-shadow: 0 0 0 3px #ffe4e6; }
+  
+  .pm-job-name { font-size: 12.5px; font-weight: 600; color: var(--pm-text-1); white-space: nowrap; }
+  .pm-job-desc { font-size: 11px; color: var(--pm-text-3); white-space: nowrap; }
+
+  /* Grid interne système */
+  .pm-sys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    width: 100%;
+  }
+
+  .pm-sys-item {
+    background: #f8fafd;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid var(--pm-border);
+  }
+
+  /* MEDIA QUERIES */
+  @media (max-width: 768px) {
+    .pm-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .pm-card-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .pm-btn {
+      width: 100%;
+    }
+
+    .pm-job-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .pm-status {
+      align-self: flex-start;
+    }
+  }
+</style>
+
+<div class="pm-page">
+
+  <div class="pm-header">
+    <div class="pm-title-group">
+      <h1 class="pm-title">Paramètres</h1>
+    </div>
+  </div>
+
+  <div class="pm-grid">
+
+    <!-- ── Card Email IMAP ── -->
+    <div class="pm-card">
+      <div class="pm-card-head">
+        <div class="pm-card-icon blue"><i class="fa-solid fa-envelope"></i></div>
+        <div>
+          <div class="pm-card-title">Configuration email</div>
+          <div class="pm-card-sub">Connexion IMAP pour récupérer les candidatures</div>
+        </div>
+      </div>
+      <div class="pm-card-body">
+        <div class="pm-field">
+          <label>Adresse email</label>
+          <input type="email" id="pm-email" value="{{ conf.email_deliore }}"
+            placeholder="recrutement@entreprise.com">
+        </div>
+        <div class="pm-field">
+          <label>Mot de passe</label>
+          <div class="pm-pwd-wrap">
+            <input type="password" id="pm-password"
+              value="{{ conf.password_email_deliore }}"
+              placeholder="Mot de passe ou clé d'application">
+            <i class="fa-solid fa-eye pm-pwd-toggle" onclick="pmTogglePwd()"></i>
+          </div>
+          <span class="pm-hint">Pour Gmail : utilisez un mot de passe d'application</span>
+        </div>
+
+        <div class="pm-toggle-row">
+          <div class="pm-toggle-info">
+            <div class="pm-toggle-label">Chargement automatique</div>
+            <div class="pm-toggle-sub">Récupère les CVs par email toutes les 10 min</div>
+          </div>
+          <label class="pm-switch">
+            <input type="checkbox" id="pm-loader-status"
+              {% if conf.email_loader_status %}checked{% endif %}>
+            <span class="pm-slider"></span>
+          </label>
+        </div>
+
+        <div class="pm-toggle-row">
+          <div class="pm-toggle-info">
+            <div class="pm-toggle-label">Traitement automatique</div>
+            <div class="pm-toggle-sub">Parse et indexe les CVs dans Qdrant</div>
+          </div>
+          <label class="pm-switch">
+            <input type="checkbox" id="pm-processing-active"
+              {% if conf.email_processing_active %}checked{% endif %}>
+            <span class="pm-slider"></span>
+          </label>
+        </div>
+
+        <div class="pm-feedback" id="pm-email-feedback"></div>
+      </div>
+      <div class="pm-card-footer">
+        <button class="pm-btn pm-btn-ghost" onclick="pmTestConnection()">
+          <i class="fa-solid fa-plug"></i> Tester la connexion
+        </button>
+        <button class="pm-btn pm-btn-primary" onclick="pmSaveEmail()">
+          <i class="fa-solid fa-floppy-disk"></i> Sauvegarder
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Card Statut des jobs ── -->
+    <div class="pm-card">
+      <div class="pm-card-head">
+        <div class="pm-card-icon green"><i class="fa-solid fa-gears"></i></div>
+        <div>
+          <div class="pm-card-title">Statut des processus</div>
+          <div class="pm-card-sub">État des tâches de fond en temps réel</div>
+        </div>
+      </div>
+      <div class="pm-card-body">
+        <div class="pm-jobs">
+          <div class="pm-job-row">
+            <div class="pm-job-info">
+              <div class="pm-job-dot {% if conf.email_loader_status %}active{% else %}inactive{% endif %}"></div>
+              <div>
+                <div class="pm-job-name">Email loader</div>
+                <div class="pm-job-desc">Vérification IMAP toutes les 10 min</div>
+              </div>
+            </div>
+            <span class="pm-status {% if conf.email_loader_status %}active{% else %}inactive{% endif %}">
+              <i class="fa-solid fa-circle-dot"></i>
+              {% if conf.email_loader_status %}Actif{% else %}Inactif{% endif %}
+            </span>
+          </div>
+
+          <div class="pm-job-row">
+            <div class="pm-job-info">
+              <div class="pm-job-dot {% if conf.email_processing_active %}active{% else %}inactive{% endif %}"></div>
+              <div>
+                <div class="pm-job-name">PDF processor</div>
+                <div class="pm-job-desc">Traitement des CVs toutes les 10 sec</div>
+              </div>
+            </div>
+            <span class="pm-status {% if conf.email_processing_active %}active{% else %}inactive{% endif %}">
+              <i class="fa-solid fa-circle-dot"></i>
+              {% if conf.email_processing_active %}Actif{% else %}Inactif{% endif %}
+            </span>
+          </div>
+        </div>
+
+        <div style="padding:14px;background:#f8fafd;border:1.5px solid var(--pm-border);border-radius:12px; width: 100%; box-sizing: border-box;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#8a94a6;margin-bottom:10px;">
+            Actions rapides
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="pm-btn pm-btn-ghost" onclick="pmReindex()">
+              <i class="fa-solid fa-rotate"></i> Réindexer Qdrant
+            </button>
+            <button class="pm-btn pm-btn-ghost" onclick="pmForceEmail()">
+              <i class="fa-solid fa-envelope-open"></i> Forcer vérif. email
+            </button>
+          </div>
+        </div>
+
+        <div class="pm-feedback" id="pm-jobs-feedback"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Card Informations système ── -->
+  <div class="pm-card pm-grid full">
+    <div class="pm-card-head">
+      <div class="pm-card-icon purple"><i class="fa-solid fa-circle-info"></i></div>
+      <div>
+        <div class="pm-card-title">Informations système</div>
+        <div class="pm-card-sub">État de l'infrastructure Deliore</div>
+      </div>
+    </div>
+    <div class="pm-card-body">
+      <div class="pm-sys-grid">
+        <div class="pm-sys-item">
+          <div style="font-size:11px;color:#8a94a6;margin-bottom:4px;">Modèle dense</div>
+          <div style="font-size:13px;font-weight:600;color:#0d1117;">BAAI/bge-m3</div>
+        </div>
+        <div class="pm-sys-item">
+          <div style="font-size:11px;color:#8a94a6;margin-bottom:4px;">Modèle sparse</div>
+          <div style="font-size:13px;font-weight:600;color:#0d1117;">Qdrant/bm25</div>
+        </div>
+        <div class="pm-sys-item">
+          <div style="font-size:11px;color:#8a94a6;margin-bottom:4px;">Base vectorielle</div>
+          <div style="font-size:13px;font-weight:600;color:#0d1117;">Qdrant</div>
+        </div>
+        <div class="pm-sys-item">
+          <div style="font-size:11px;color:#8a94a6;margin-bottom:4px;">Base de données</div>
+          <div style="font-size:13px;font-weight:600;color:#0d1117;">PostgreSQL</div>
+        </div>
+        <div class="pm-sys-item">
+          <div style="font-size:11px;color:#8a94a6;margin-bottom:4px;">Framework</div>
+          <div style="font-size:13px;font-weight:600;color:#0d1117;">Django 5.2</div>
+        </div>
+        <div class="pm-sys-item">
+          <div style="font-size:11px;color:#8a94a6;margin-bottom:4px;">Fusion algorithme</div>
+          <div style="font-size:13px;font-weight:600;color:#0d1117;">RRF (dense + sparse)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+
+function pmTogglePwd() {
+  const inp = document.getElementById('pm-password');
+  const ico = document.querySelector('.pm-pwd-toggle');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.className = 'fa-solid fa-eye-slash pm-pwd-toggle';
+  } else {
+    inp.type = 'password';
+    ico.className = 'fa-solid fa-eye pm-pwd-toggle';
+  }
+}
+
+function pmShowFeedback(id, msg, type) {
+  const el = document.getElementById(id);
+  el.className = `pm-feedback ${type}`;
+  el.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+  setTimeout(() => { el.className = 'pm-feedback'; }, 4000);
+}
+
+async function pmSaveEmail() {
+  const body = {
+    email_deliore:           document.getElementById('pm-email').value.trim(),
+    password_email_deliore:  document.getElementById('pm-password').value,
+    email_loader_status:     document.getElementById('pm-loader-status').checked,
+    email_processing_active: document.getElementById('pm-processing-active').checked,
+  };
+
+  const res  = await fetch("{% url 'settings' %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+
+  if (data.status === 'success') {
+    pmShowFeedback('pm-email-feedback', 'Configuration sauvegardée', 'success');
+    updateJobBadges(
+      document.getElementById('pm-loader-status').checked,
+      document.getElementById('pm-processing-active').checked
+    );
+  } else {
+    pmShowFeedback('pm-email-feedback', data.message || 'Erreur', 'error');
+  }
+}
+
+function updateJobBadges(loaderActive, processingActive) {
+  document.querySelectorAll('.pm-job-dot').forEach((dot, i) => {
+    const active = i === 0 ? loaderActive : processingActive;
+    dot.className = `pm-job-dot ${active ? 'active' : 'inactive'}`;
+  });
+  document.querySelectorAll('.pm-status').forEach((badge, i) => {
+    const active = i === 0 ? loaderActive : processingActive;
+    badge.className = `pm-status ${active ? 'active' : 'inactive'}`;
+    badge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> ${active ? 'Actif' : 'Inactif'}`;
+  });
+}
+
+async function pmTestConnection() {
+  pmShowFeedback('pm-email-feedback', 'Test en cours...', 'success');
+  const res  = await fetch("{% url 'test_imap' %}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    pmShowFeedback('pm-email-feedback', `Connexion réussie — ${data.message}`, 'success');
+  } else {
+    pmShowFeedback('pm-email-feedback', `Échec : ${data.message}`, 'error');
+  }
+}
+
+async function pmReindex() {
+  pmShowFeedback('pm-jobs-feedback', 'Réindexation en cours...', 'success');
+  const res  = await fetch("{% url 'reindex_qdrant_view' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  });
+  const data = await res.json();
+  pmShowFeedback('pm-jobs-feedback', data.message || 'Réindexation terminée', 'success');
+}
+
+async function pmForceEmail() {
+  pmShowFeedback('pm-jobs-feedback', 'Vérification email lancée...', 'success');
+  const res  = await fetch("{% url 'force_email_check' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  });
+  const data = await res.json();
+  pmShowFeedback(
+    'pm-jobs-feedback',
+    `${data.count || 0} fichier(s) téléchargé(s)`,
+    data.status === 'success' ? 'success' : 'error'
+  );
+}
+</script>
+{% endblock %}

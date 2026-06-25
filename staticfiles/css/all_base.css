@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+a {
+    text-decoration: none;
+}
+
+
+p,
+a,
+h1,li,
+label,
+input {
+    color: #1F1F1F;
+
+}
+
+input::selection {
+    background: transparent;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-text-fill-color: inherit !important;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+.hr-custom {
+    margin-top: 5px;
+    background-color: #E8E8E8;
+    border: none;
+    height: 2px;
+    border-radius: 12px;
+}
+
+.eye-btn {
+    width: 40px;
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.block-notif.info {
+    background-color: #EEEEFE;
+    border: 1px solid #5458F7;
+    border-left:4px solid #5458F7;
+}
+.block-notif.success {
+    background-color: #E6FAF5;
+    border: 1px solid #00CC99;
+    border-left:4px solid #00CC99;
+}
+.block-notif.danger {
+    background-color: #FDEEEE;
+    border: 1px solid #EB5757;
+    border-left:4px solid #EB5757;
+}
+.block-notif.warning {
+    background-color: #FDF8E8;
+    border: 1px solid #F2C94C;
+    border-left:4px solid  #F2C94C;
+    
+}
+.tag-symbole {
+    margin: 0px 10px;
+    border-radius: 100%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    i {
+        font-size: 24px;
+        color: #EEEEFE;
+    }
+}
+
+.tag-symbole.info {
+    background-color: #5458F7;
+}
+
+
+.tag-symbole.success {
+    background-color: #00CC99;
+}
+
+
+.tag-symbole.danger {
+    background-color: #EB5757;
+}
+
+
+.tag-symbole.warning {
+    background-color: #F2C94C;
+}
+
+.block-notif.show {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.block-notif {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 999;
+    padding: 5px 12px;
+    border-radius: 6px;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    transform: translateY(20px);
+    box-shadow: 0px 2px 4px #00000050;
+    visibility: hidden;
+    transition: opacity 2s ease, transform 2s ease;
+    margin: 0;
+    font-size: 14px;
+    color: #2F3032;
+    h1,
+    p {
+        font-size: 12px;
+    }
+
+    p {
+        font-weight: 400;
+    }
+}
+
+
+
+button {
+    cursor: pointer;
+}
+
+input[type='checkbox'] {
+    cursor: pointer;
+}

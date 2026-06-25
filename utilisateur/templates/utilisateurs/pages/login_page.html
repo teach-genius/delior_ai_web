@@ -1,0 +1,128 @@
+{% extends 'utilisateurs/base_user.html' %}
+{% load static %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+
+<div class="lg-card">
+
+    <div class="lg-header">
+        <h1 class="lg-title">
+            Bon retour
+            <span style="display:flex;align-items:center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                     viewBox="0 0 24 24" fill="none" stroke="#c4924d"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M15 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/>
+                    <path d="M21 12h-13l3 -3"/>
+                    <path d="M11 15l-3 -3"/>
+                </svg>
+            </span>
+        </h1>
+        <p class="lg-subtitle">
+            Connectez-vous à votre compte
+            <strong style="color:var(--lg-text-1);">DeliorAI</strong>
+        </p>
+    </div>
+
+    <form action="{% url 'utilisateur:login' %}" method="POST"
+          class="lg-form" id="lg-Form" onsubmit="lgHandleSubmit(event)">
+        {% csrf_token %}
+
+        <div class="lg-field">
+            <label>Email</label>
+            <div class="lg-input-wrap">
+                <input class="lg-input" type="email"
+                       name="email" id="lg-email"
+                       placeholder="votre@email.com"
+                       maxlength="150" autocomplete="email">
+                <i class="fa-solid fa-envelope lg-input-icon" style="cursor:default;"></i>
+            </div>
+            <span class="lg-field-error" id="err-email">
+                <i class="fa-solid fa-circle-exclamation"></i> Email requis
+            </span>
+        </div>
+
+        <div class="lg-field">
+            <label>Mot de passe</label>
+            <div class="lg-input-wrap">
+                <input class="lg-input" type="password"
+                       name="password" id="lg-password"
+                       placeholder="Votre mot de passe"
+                       maxlength="128" autocomplete="current-password">
+                <i class="fa-solid fa-eye lg-input-icon"
+                   id="lg-eye" onclick="lgTogglePwd()"></i>
+            </div>
+            <span class="lg-field-error" id="err-password">
+                <i class="fa-solid fa-circle-exclamation"></i> Mot de passe requis
+            </span>
+        </div>
+
+        <div class="lg-forgot">
+            <a href="{% url 'utilisateur:forgot_password' %}">Mot de passe oublié ?</a>
+        </div>
+
+        <button type="submit" class="lg-submit" id="lg-submit">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            Se connecter
+        </button>
+
+    </form>
+
+    <div class="lg-divider"><span>Pas encore de compte ?</span></div>
+
+    <div class="lg-register-link">
+        <a href="{% url 'utilisateur:register' %}">
+            <i class="fa-solid fa-user-plus" style="font-size:11px;"></i>
+            Créer un compte
+        </a>
+    </div>
+
+</div>
+
+<script>
+function lgTogglePwd() {
+    const inp = document.getElementById('lg-password');
+    const ico = document.getElementById('lg-eye');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    ico.className = `fa-solid fa-eye${inp.type === 'text' ? '-slash' : ''} lg-input-icon`;
+}
+
+function lgHandleSubmit(e) {
+    let ok = true;
+
+    function check(id, errId) {
+        const el = document.getElementById(id);
+        const err = document.getElementById(errId);
+        const valid = el.value.trim().length > 0;
+        
+        el.classList.toggle('error', !valid);
+        
+        // Gestion de l'affichage de l'erreur si l'élément existe dans le HTML
+        if (err) {
+            err.classList.toggle('show', !valid);
+        }
+        
+        if (!valid) ok = false;
+    }
+
+    check('lg-email', 'err-email');
+    check('lg-password', 'err-password');
+
+    if (!ok) { 
+        e.preventDefault(); 
+        return; 
+    }
+
+    const btn = document.getElementById('lg-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connexion…';
+    
+    // Appel au loader global si défini dans all_base.js
+    if (typeof showLoaderUser === 'function') showLoaderUser();
+}
+</script>
+
+{% endblock %}

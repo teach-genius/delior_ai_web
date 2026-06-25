@@ -1,0 +1,297 @@
+{% load static %}
+<style>
+    /* ══ Variables & Base ══ */
+    :root {
+        --nav-height: 60px;
+        --nav-bg: #ffffff;
+        --nav-border: #e4e9f2;
+        --nav-text: #0d1117;
+        --nav-text-muted: #8a94a6;
+        --nav-accent: #3b5bdb;
+        --nav-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+
+    #nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        height: var(--nav-height);
+        background: var(--nav-bg);
+        border-bottom: 1.5px solid var(--nav-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        box-shadow: var(--nav-shadow);
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Live Time (Gauche) ── */
+    .info-panel-sub {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--nav-text-muted);
+        background: #f8fafd;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--nav-border);
+        white-space: nowrap;
+    }
+
+    /* ── Right Section ── */
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-left: auto;
+    }
+
+    /* ── Notif Button ── */
+    .notif-btn {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background .15s;
+        color: var(--nav-text);
+        font-size: 16px;
+    }
+
+    .notif-btn:hover {
+        background: #f8fafd;
+        color: var(--nav-accent);
+    }
+
+    .notif-count {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        background: #f43f5e;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--nav-bg);
+        padding: 0 4px;
+    }
+
+    .notif-count:empty {
+        display: none;
+    }
+
+    /* ── User Chip ── */
+    .user-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 10px 4px 4px;
+        border-radius: 20px;
+        border: 1.5px solid var(--nav-border);
+        background: #fff;
+        transition: border-color .15s, box-shadow .15s;
+        cursor: pointer;
+    }
+
+    .user-chip:hover {
+        border-color: #c5d0f7;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: var(--nav-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 1.5px solid #fff;
+        box-shadow: 0 0 0 1px #e4e9f2;
+    }
+
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .user-info {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .user-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--nav-text);
+        line-height: 1.2;
+    }
+
+    .user-role {
+        font-size: 10.5px;
+        color: var(--nav-text-muted);
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    /* ── Burger Menu (Mobile Only) ── */
+    .nav-burger {
+        display: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1.5px solid var(--nav-border);
+        background: #fff;
+        color: var(--nav-text);
+        font-size: 18px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: all .15s;
+    }
+    
+    .nav-burger:active {
+        transform: scale(0.95);
+        background: #f8fafd;
+    }
+
+    /* ── Responsive Mobile (< 768px) ── */
+    @media (max-width: 768px) {
+        #nav {
+            padding: 0 12px;
+            height: 56px;
+        }
+
+        /* Cache l'heure sur mobile pour gagner de la place */
+        .info-panel-sub {
+            display: none;
+        }
+
+        .nav-burger {
+            display: flex;
+        }
+
+        .nav-right {
+            gap: 10px;
+        }
+
+        /* Réduit la puce utilisateur : seulement l'avatar */
+        .user-chip {
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+        }
+        
+        .user-chip:hover {
+            box-shadow: none;
+        }
+
+        .user-info {
+            display: none; /* Cache nom et rôle */
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border: none;
+            box-shadow: none;
+        }
+
+        .notif-btn {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    /* ── Très petits écrans (< 360px) ── */
+    @media (max-width: 360px) {
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+        }
+        .notif-btn {
+            width: 36px;
+            height: 36px;
+        }
+    }
+</style>
+
+<nav id="nav">
+    <!-- Bouton Burger (visible uniquement sur mobile) -->
+    <div class="nav-burger" onclick="toggleMobileMenu()">
+        <i class="fa-solid fa-bars"></i>
+    </div>
+
+    <!-- Heure / Info (Gauche) -->
+    <div class="info-panel-sub" id="live-time">Chargement...</div>
+
+    <!-- Droite : Notifs + Profil -->
+    <div class="nav-right">
+        <!-- Notifications -->
+        <div class="notif-btn" onclick="open_viewNotifier()" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            <div class="notif-count">
+                {% if notifications and notifications_count > 0 %}{{ notifications_count }}{% else %}0{% endif %}
+            </div>
+        </div>
+
+        <!-- Profil Utilisateur -->
+        <div class="user-chip">
+            <div class="user-avatar">
+                {% if user.is_authenticated and user.image.url %}
+                <img src="{{ user.image.url }}" alt="photo">
+                {% else %}
+                <i class="fa-solid fa-user"></i>
+                {% endif %}
+            </div>
+            {% if user.is_authenticated %}
+            <ul class="user-info">
+                <li class="user-name">{{ user.last_name }}</li>
+                <li class="user-role">{{ user.post }}</li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Fonction optionnelle pour gérer l'ouverture d'un menu latéral sur mobile
+    function toggleMobileMenu() {
+        // Implémentez ici l'ouverture de votre menu latéral si nécessaire
+        console.log("Menu burger cliqué");
+        // Exemple : document.getElementById('mobile-menu').classList.toggle('open');
+    }
+
+    // Mise à jour de l'heure en direct
+    function updateLiveTime() {
+        const timeEl = document.getElementById('live-time');
+        if (!timeEl) return;
+        const now = new Date();
+        const options = { weekday: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        timeEl.textContent = now.toLocaleDateString('fr-FR', options);
+    }
+    
+    if (document.getElementById('live-time')) {
+        updateLiveTime();
+        setInterval(updateLiveTime, 60000); 
+    }
+</script>

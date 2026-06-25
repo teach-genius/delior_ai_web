@@ -1,0 +1,212 @@
+<style>
+    /* ══ Modal view doc — scopé vd-* ══ */
+    #modale-view-cv {
+        position: fixed;
+        inset: 0;
+        background: rgba(10,15,30,.45);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        visibility: hidden;
+        z-index: 99999;
+        transition: opacity .2s;
+        padding: 10px; /* Marge de sécurité sur tout écran */
+        box-sizing: border-box;
+    }
+
+    #in-modal-view {
+        width: 82%;
+        max-width: 1100px;
+        height: 90vh;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1.5px solid #e4e9f2;
+        box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.08);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.97);
+        transition: transform .22s ease;
+        max-height: 90vh; /* Sécurité hauteur */
+    }
+
+    #modale-view-cv[style*="visible"] #in-modal-view {
+        transform: scale(1);
+    }
+
+    /* ── Header sombre ── */
+    .vd-header {
+        background: #0a0f1e;
+        padding: 0 18px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* bande colorée top */
+    .vd-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b5bdb, #8b5cf6);
+    }
+
+    /* dégradé décoratif */
+    .vd-header::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 10% 50%, rgba(59,91,219,.2) 0%, transparent 60%),
+                    radial-gradient(ellipse at 90% 50%, rgba(139,92,246,.12) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .vd-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+        min-width: 0; /* Permet au texte de se compresser si besoin */
+    }
+
+    .vd-header-icon {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.12);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .vd-header-icon i { font-size: 12px; color: #fff; }
+
+    .vd-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vd-close {
+        position: relative; z-index: 1;
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,.15);
+        background: rgba(255,255,255,.08);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: background .15s, border-color .15s;
+        flex-shrink: 0;
+    }
+
+    .vd-close:hover {
+        background: rgba(244,63,94,.25);
+        border-color: rgba(244,63,94,.4);
+    }
+
+    .vd-close i { font-size: 12px; color: rgba(255,255,255,.7); }
+    .vd-close:hover i { color: #f43f5e; }
+
+    /* ── iframe ── */
+    #iframe-view-doc {
+        flex: 1;
+        width: 100%;
+        border: none;
+        display: block;
+        min-height: 0; /* Important pour le flex */
+    }
+
+    #iframe-view-doc::-webkit-scrollbar { width: 0; }
+    iframe::-webkit-scrollbar { width: 0; }
+
+    /* ══ RESPONSIVE ══ */
+    
+    /* Tablettes et petits écrans landscape */
+    @media (max-width: 768px) {
+        #in-modal-view {
+            width: 90%;
+            height: 85vh;
+        }
+        
+        .vd-header {
+            padding: 0 12px;
+            height: 42px;
+        }
+
+        .vd-title {
+            font-size: 12px;
+        }
+    }
+
+    /* Mobiles */
+    @media (max-width: 480px) {
+        #modale-view-cv {
+            align-items: flex-end; /* Optionnel : ancre en bas si préféré, sinon center */
+            padding: 0;
+        }
+
+        #in-modal-view {
+            width: 100%;
+            max-width: 100%;
+            height: 100vh; /* Plein écran sur mobile */
+            max-height: 100vh;
+            border-radius: 0;
+            border: none;
+        }
+
+        .vd-header {
+            padding: 0 10px;
+            height: 50px; /* Un peu plus haut pour le tactile */
+        }
+
+        .vd-header-icon {
+            width: 32px; height: 32px;
+        }
+
+        .vd-title {
+            font-size: 14px;
+        }
+
+        .vd-close {
+            width: 36px; height: 36px; /* Zone de touche plus grande */
+        }
+        
+        .vd-close i {
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div id="modale-view-cv">
+    <div id="in-modal-view">
+
+        <!-- Header -->
+        <div class="vd-header">
+            <div class="vd-header-left">
+                <div class="vd-header-icon">
+                    <i class="fa-solid fa-file-lines"></i>
+                </div>
+                <span class="vd-title">Visualisation du document</span>
+            </div>
+            <div class="vd-close"
+                 onclick="document.getElementById('modale-view-cv').style.visibility='hidden'">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+        </div>
+
+        <!-- Iframe -->
+        <iframe id="iframe-view-doc" src="" frameborder="0"></iframe>
+
+    </div>
+</div>

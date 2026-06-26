@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-
+import hashlib
 from celery import shared_task
 from django.conf import settings
 from django_redis import get_redis_connection
@@ -12,18 +12,35 @@ logger = logging.getLogger(__name__)
 CV_EXTENSIONS = {".pdf", ".docx", ".doc"}
 LOCK_TTL      = 1800  # 30 min
 
+def sha256_file(path):
+    h = hashlib.sha256()
+
+    with open(path,'rb') as f:
+        while chunk := f.read(8192):
+            h.update(chunk)
+    return h.hexdigest()
+
 def _lock_key(path: str) -> str:
     return f"cv_lock:{path}"
 
 def _dispatch_cv(rc, path: str, session_folder: str | None = None) -> bool:
-    """
-    Acquiert le verrou AVANT de publier dans la file.
-    Retourne True si la tâche a été dispatchée, False si déjà en file/en cours.
-    """
+    try:
+        digest = sha256_file(path)
+    except Exception as exc:
+        logger.warning("[DISPATCH] Impossible de calculer le hash de %s : %s", path, exc)
+        digest = None
+
+    # Doublon détecté via hash
+    if digest and rc.exists(f"cv_digest:{digest}"):
+        logger.info("[DISPATCH] Doublon détecté (hash connu), ignoré : %s", path)
+        _safe_remove(path)
+        return False
+
     if rc.set(_lock_key(path), "queued", nx=True, ex=LOCK_TTL):
-        process_cv_task.delay(path, session_folder=session_folder)
+        process_cv_task.delay(path, session_folder=session_folder, digest=digest)
         logger.info("[DISPATCH] Tâche publiée : %s", path)
         return True
+
     logger.info("[DISPATCH] Déjà en file ou en cours, ignoré : %s", path)
     return False
 
@@ -53,7 +70,7 @@ def _cleanup_session_if_empty(session_folder: str | None) -> None:
     acks_late=True,
     reject_on_worker_lost=True,
 )
-def process_cv_task(self, path: str, session_folder: str | None = None):
+def process_cv_task(self, path: str, session_folder: str | None = None, digest: str | None = None):
     rc = get_redis_connection("default")
 
     try:
@@ -66,10 +83,15 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         from candidat.email_utils import process_cv_file
 
         logger.info("[CELERY] Début traitement : %s", path)
-        ok, msg = process_cv_file(path)  # supprime le fichier en interne
+        ok, msg = process_cv_file(path)
 
         if not ok:
             raise RuntimeError(msg)
+
+        # Enregistrer le hash pour éviter les doublons futurs
+        if digest:
+            rc.set(f"cv_digest:{digest}", "1", ex=60 * 60 * 24 * 90)  # 90 jours
+            logger.debug("[CELERY] Hash enregistré : %s", digest)
 
         logger.info("[CELERY] Succès : %s — %s", path, msg)
         _release_lock(rc, path)
@@ -84,15 +106,12 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
 
     except Exception as exc:
         logger.error("[CELERY] Erreur sur %s : %s", path, exc)
-
         if self.request.retries >= self.max_retries:
             logger.error("[CELERY] Retries épuisés, abandon : %s", path)
             _release_lock(rc, path)
             _cleanup_session_if_empty(session_folder)
             return {"status": "failed", "path": path}
-
         raise self.retry(exc=exc)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TÂCHE : chargement des emails
@@ -123,7 +142,7 @@ def load_emails_task(self):
         raise self.retry(exc=exc)
 
     finally:
-        rc.delete(lock_key)  # toujours libéré, même en cas d'erreur
+        rc.delete(lock_key) 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TÂCHE : watchdog

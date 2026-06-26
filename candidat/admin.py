@@ -8,7 +8,6 @@ from .models import Configuration, Competence, CandidatCV, QueryMatching, Rappor
 
 
 @admin.register(Configuration)
-
 class ConfigurationAdmin(admin.ModelAdmin):
     list_display  = ('email_deliore', 'email_loader_status', 'email_processing_active')
     fieldsets = (
@@ -19,6 +18,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
             'fields': ('email_loader_status', 'email_processing_active')
         }),
     )
+
     def has_add_permission(self, request):
         return not Configuration.objects.exists()
 
@@ -32,9 +32,9 @@ class ConfigurationAdmin(admin.ModelAdmin):
 
 @admin.register(Competence)
 class CompetenceAdmin(admin.ModelAdmin):
-    list_display   = ("nom", "nb_candidats")
-    search_fields  = ("nom",)
-    ordering       = ("nom",)
+    list_display  = ("nom", "nb_candidats")
+    search_fields = ("nom",)
+    ordering      = ("nom",)
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -51,9 +51,9 @@ class CompetenceAdmin(admin.ModelAdmin):
 # ─────────────────────────────────────────────────────────────
 
 class CompetenceInline(admin.TabularInline):
-    model              = CandidatCV.competences.through
-    extra              = 0
-    verbose_name       = "Compétence"
+    model               = CandidatCV.competences.through
+    extra               = 0
+    verbose_name        = "Compétence"
     verbose_name_plural = "Compétences"
     autocomplete_fields = ("competence",)
 
@@ -108,9 +108,9 @@ class CandidatCVAdmin(admin.ModelAdmin):
         "niveau",
         "contrat_souhaite",
     )
-    ordering = ("-date_importation",)
-    list_per_page = 25
-    date_hierarchy = "date_importation"
+    ordering               = ("-date_importation",)
+    list_per_page          = 25
+    date_hierarchy         = "date_importation"
     show_full_result_count = True
 
     actions = ["marquer_termine", "marquer_en_attente", "activer", "desactiver"]
@@ -207,9 +207,9 @@ class CandidatCVAdmin(admin.ModelAdmin):
     def actif_toggle(self, obj):
         return obj.actif
 
-    @admin.display(description="Compétences")
+    @admin.display(description="Compétences", ordering="_nb_competences")
     def nb_competences(self, obj):
-        n = obj.competences.count()
+        n = obj._nb_competences
         if n == 0:
             return format_html('<span style="color:#9ca3af;">—</span>')
         return format_html(
@@ -293,21 +293,24 @@ class CandidatCVAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return (
             super().get_queryset(request)
-            .prefetch_related("competences", "agent_analyse_cv")
+            .prefetch_related("agent_analyse_cv")
+            .annotate(_nb_competences=Count("competences"))
         )
+
+
 # ─────────────────────────────────────────────────────────────
 # QueryMatching
 # ─────────────────────────────────────────────────────────────
 
 @admin.register(QueryMatching)
 class QueryMatchingAdmin(admin.ModelAdmin):
-    list_display  = ("apercu_query", "agent_deliore", "depuis_query")
-    list_filter   = ("agent_deliore",)
-    search_fields = ("content", "agent_deliore__email", "agent_deliore__first_name")
+    list_display    = ("apercu_query", "agent_deliore", "depuis_query")
+    list_filter     = ("agent_deliore",)
+    search_fields   = ("content", "agent_deliore__email", "agent_deliore__first_name")
     readonly_fields = ("query_id", "date_importation", "agent_deliore")
-    ordering      = ("-date_importation",)
-    list_per_page = 30
-    date_hierarchy = "date_importation"
+    ordering        = ("-date_importation",)
+    list_per_page   = 30
+    date_hierarchy  = "date_importation"
 
     def has_add_permission(self, request):
         return False
@@ -335,13 +338,13 @@ class QueryMatchingAdmin(admin.ModelAdmin):
 
 @admin.register(RapportCv)
 class RapportCvAdmin(admin.ModelAdmin):
-    list_display   = ("candidat_nom", "actif", "depuis_rapport", "date_modification")
-    list_filter    = ("actif",)
-    search_fields  = ("candidatcv__nom_complet", "candidatcv__email")
+    list_display    = ("candidat_nom", "actif", "depuis_rapport", "date_modification")
+    list_filter     = ("actif",)
+    search_fields   = ("candidatcv__nom_complet", "candidatcv__email")
     readonly_fields = ("rapport_id", "date_creation", "date_modification", "candidatcv")
-    ordering       = ("-date_creation",)
-    list_per_page  = 25
-    date_hierarchy = "date_creation"
+    ordering        = ("-date_creation",)
+    list_per_page   = 25
+    date_hierarchy  = "date_creation"
 
     fieldsets = (
         ("Rapport", {

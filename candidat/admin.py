@@ -104,7 +104,6 @@ class QueryMatchingAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-
 @admin.register(RapportCv)
 class RapportCvAdmin(admin.ModelAdmin):
     list_display  = ("candidatcv", "actif", "date_creation", "date_modification")

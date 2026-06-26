@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 from django.utils import timezone
 from django.db.models import Count
@@ -257,13 +258,18 @@ class CandidatCVAdmin(admin.ModelAdmin):
     def competences_liste(self, obj):
         comps = obj.competences.all()[:30]
         if not comps:
-            return format_html('<span style="color:#9ca3af;">Aucune compétence associée</span>')
-        tags = "".join(
-            f'<span style="display:inline-block;margin:2px;padding:3px 10px;'
-            f'background:#eef2ff;color:#3b5bdb;border:1px solid #c5d0f7;'
-            f'border-radius:20px;font-size:11px;font-weight:600;">{c.nom}</span>'
+            return format_html(
+                '<span style="color:#9ca3af;">Aucune compétence associée</span>'
+            )
+        tags = mark_safe("".join(
+            format_html(
+                '<span style="display:inline-block;margin:2px;padding:3px 10px;'
+                'background:#eef2ff;color:#3b5bdb;border:1px solid #c5d0f7;'
+                'border-radius:20px;font-size:11px;font-weight:600;">{}</span>',
+                c.nom,
+            )
             for c in comps
-        )
+        ))
         return format_html('<div style="line-height:2;">{}</div>', tags)
 
     # ── Actions ───────────────────────────────────────────────

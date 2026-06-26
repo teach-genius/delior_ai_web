@@ -20,6 +20,14 @@ def sha256_file(path):
             h.update(chunk)
     return h.hexdigest()
 
+def _safe_remove(path: str):
+    try:
+        if path and os.path.exists(path):
+            os.remove(path)
+            logger.info("[FILE] Supprimé : %s", path)
+    except Exception:
+        logger.exception("[FILE] Impossible de supprimer %s",path)
+
 def _lock_key(path: str) -> str:
     return f"cv_lock:{path}"
 

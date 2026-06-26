@@ -7,26 +7,28 @@ from dotenv import load_dotenv
 from django.conf import settings
 
 from candidat.utils import save_candidat_from_cv_path
-
 from aiagent.auths.auth import get_token
-from aiagent.auths.config import GRAPH_BASE,SHARED_MAILBOX
+from aiagent.auths.config import GRAPH_BASE, SHARED_MAILBOX
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-SAVE_FOLDER     = os.path.join(settings.MEDIA_ROOT, "candidatures_email")        
-CV_EXTENSIONS   = re.compile(r'\.(pdf|docx|doc)$', re.IGNORECASE)
-SUBJECT_FILTER  = re.compile(r"candidature", re.IGNORECASE)
-CV_NAME_RE      = re.compile(r'\bcv\b', re.IGNORECASE)
+SAVE_FOLDER    = os.path.join(settings.MEDIA_ROOT, "candidatures_email")
+CV_EXTENSIONS  = re.compile(r'\.(pdf|docx|doc)$', re.IGNORECASE)
+SUBJECT_FILTER = re.compile(r"candidature", re.IGNORECASE)
+CV_NAME_RE     = re.compile(r'\bcv\b', re.IGNORECASE)
 
 MAILBOX = SHARED_MAILBOX
+
 
 def _h(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
+
 def _url(*parts: str) -> str:
     return f"{GRAPH_BASE}/users/{MAILBOX}/" + "/".join(parts)
+
 
 def select_cv_attachment(attachments: list[dict]) -> dict | None:
     try:
@@ -42,6 +44,7 @@ def select_cv_attachment(attachments: list[dict]) -> dict | None:
         logger.warning("[SELECT_CV] Erreur sélection pièce jointe : %s", exc)
         return None
 
+
 def _safe_remove(path: str) -> None:
     try:
         if path and os.path.exists(path):
@@ -49,6 +52,7 @@ def _safe_remove(path: str) -> None:
             logger.debug("Fichier supprimé : %s", path)
     except Exception as exc:
         logger.warning("Impossible de supprimer %s : %s", path, exc)
+
 
 def process_cv_file(file_path: str) -> tuple[bool, str]:
     if not file_path or not os.path.isfile(file_path):
@@ -76,14 +80,16 @@ def process_cv_file(file_path: str) -> tuple[bool, str]:
     except Exception as exc:
         logger.exception("[PROCESS] Erreur inattendue sur %s : %s", file_path, exc)
         return False, str(exc)
-   
-def email_candidature_loader() -> int:
+
+
+def email_candidature_loader(rc=None) -> int:
     """
     Lit les emails non lus de la boîte recrutement via Graph API,
     télécharge les pièces jointes CV (pdf/docx/doc) des mails dont
-    le sujet contient « candidature », puis marque le mail comme lu.
+    le sujet contient « candidature », marque le mail comme lu,
+    et dispatche immédiatement chaque CV via _dispatch_cv() si rc est fourni.
 
-    Retourne le nombre de CV téléchargés.
+    Retourne le nombre de CV téléchargés et dispatchés.
     """
     try:
         os.makedirs(SAVE_FOLDER, exist_ok=True)
@@ -133,7 +139,7 @@ def email_candidature_loader() -> int:
                     "[EMAIL] Échec marquage lu pour %s : %s — mail ignoré",
                     msg_id, patch_resp.text,
                 )
-                continue 
+                continue
             logger.info("[EMAIL] Mail %s marqué comme lu", msg_id)
         except Exception as exc:
             logger.warning("[EMAIL] Erreur marquage lu mail %s : %s — mail ignoré", msg_id, exc)
@@ -166,11 +172,10 @@ def email_candidature_loader() -> int:
             logger.info("[EMAIL] Pièce(s) ignorée(s) : %s", skipped)
 
         filename = cv_att["name"]
-        base, ext = os.path.splitext(filename)
         filepath = os.path.join(SAVE_FOLDER, filename)
 
         if os.path.exists(filepath):
-            logger.info("[EMAIL] CV déjà présent, ignoré : %s", filepath)
+            logger.info("[EMAIL] CV déjà présent sur disque, ignoré : %s", filepath)
             continue
 
         try:
@@ -181,17 +186,22 @@ def email_candidature_loader() -> int:
             dl_resp.raise_for_status()
             content_bytes: bytes = dl_resp.content
         except Exception as exc:
-            logger.error("[EMAIL] Téléchargement pièce jointe échoué %s : %s", cv_att["name"], exc)
+            logger.error("[EMAIL] Téléchargement échoué %s : %s", cv_att["name"], exc)
             continue
 
         try:
             with open(filepath, "wb") as f:
                 f.write(content_bytes)
             logger.info("[EMAIL] CV sauvegardé : %s", filepath)
-            cv_count += 1
         except OSError as exc:
             logger.error("[EMAIL] Erreur écriture %s : %s", filename, exc)
             continue
+
+        if rc is not None:
+            from candidat.tasks import _dispatch_cv
+            _dispatch_cv(rc, filepath, session_folder=None)
+        
+        cv_count += 1
 
     logger.info("[EMAIL] Total CV téléchargés : %d", cv_count)
     return cv_count

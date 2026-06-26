@@ -54,10 +54,6 @@ def _cleanup_session_if_empty(session_folder: str | None) -> None:
     reject_on_worker_lost=True,
 )
 def process_cv_task(self, path: str, session_folder: str | None = None):
-    """
-    Le verrou est déjà acquis par _dispatch_cv() avant l'appel à delay().
-    Le worker libère le verrou uniquement en fin de traitement définitif.
-    """
     rc = get_redis_connection("default")
 
     try:
@@ -75,14 +71,12 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         if not ok:
             raise RuntimeError(msg)
 
-        # Succès : fichier déjà supprimé par process_cv_file()
         logger.info("[CELERY] Succès : %s — %s", path, msg)
         _release_lock(rc, path)
         _cleanup_session_if_empty(session_folder)
         return {"status": "success", "message": msg}
 
     except ValueError as exc:
-        # CV invalide définitivement — pas de retry
         logger.warning("[CELERY] CV ignoré : %s", exc)
         _release_lock(rc, path)
         _cleanup_session_if_empty(session_folder)
@@ -92,13 +86,11 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         logger.error("[CELERY] Erreur sur %s : %s", path, exc)
 
         if self.request.retries >= self.max_retries:
-            # Retries épuisés : on abandonne et on libère
             logger.error("[CELERY] Retries épuisés, abandon : %s", path)
             _release_lock(rc, path)
             _cleanup_session_if_empty(session_folder)
             return {"status": "failed", "path": path}
 
-        # Encore des retries disponibles : on garde le verrou
         raise self.retry(exc=exc)
 
 
@@ -113,31 +105,17 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
 )
 def load_emails_task(self):
     """
-    Télécharge les candidatures reçues par email et dispatche leur traitement.
-
-    Flux :
-        1. email_candidature_loader() → télécharge les CVs dans candidatures_email/
-        2. Scanne candidatures_email/ et dispatche process_cv_task pour chaque fichier
-           non encore verrouillé (le verrou est acquis atomiquement avant le delay).
+    Télécharge les candidatures reçues par email et dispatche immédiatement
+    chaque CV au moment de sa sauvegarde — identique au flux cv_temps.
     """
     try:
-        from candidat.email_utils import email_candidature_loader, SAVE_FOLDER
+        from candidat.email_utils import email_candidature_loader
 
-        count = email_candidature_loader()
-        logger.info("[EMAIL_TASK] %d email(s) chargé(s)", count)
+        rc    = get_redis_connection("default")
+        count = email_candidature_loader(rc=rc)
 
-        rc           = get_redis_connection("default")
-        email_folder = Path(SAVE_FOLDER)
-        dispatched   = 0
-
-        if email_folder.is_dir():
-            for f in email_folder.iterdir():
-                if f.is_file() and f.suffix.lower() in CV_EXTENSIONS:
-                    if _dispatch_cv(rc, str(f), session_folder=None):
-                        dispatched += 1
-
-        logger.info("[EMAIL_TASK] %d fichier(s) dispatchés", dispatched)
-        return {"emails_loaded": count, "dispatched": dispatched}
+        logger.info("[EMAIL_TASK] %d CV téléchargé(s) et dispatché(s)", count)
+        return {"emails_loaded": count}
 
     except Exception as exc:
         logger.exception("[EMAIL_TASK] Erreur : %s", exc)
@@ -153,14 +131,9 @@ def watchdog_task():
     Tâche de surveillance exécutée toutes les 5 minutes.
 
     Actions :
-        1. Scanne candidatures_email/ — relance les fichiers sans verrou actif.
+        1. Scanne candidatures_email/ — relance les fichiers orphelins (verrou expiré).
         2. Scanne cv_temps/*/ — relance les fichiers orphelins, supprime les
            dossiers sessions devenus vides.
-
-    Cas couverts :
-        - Worker crashé en cours de traitement (verrou expiré, fichier restant).
-        - Dispatch raté lors d'un upload (fichier présent, pas de tâche en queue).
-        - Dossier session non nettoyé.
     """
     rc         = get_redis_connection("default")
     media_root = Path(settings.MEDIA_ROOT)

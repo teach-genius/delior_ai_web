@@ -104,16 +104,17 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
     acks_late=True,
 )
 def load_emails_task(self):
-    """
-    Télécharge les candidatures reçues par email et dispatche immédiatement
-    chaque CV au moment de sa sauvegarde — identique au flux cv_temps.
-    """
+    rc       = get_redis_connection("default")
+    lock_key = "lock:load_emails_task"
+
+    if not rc.set(lock_key, "running", nx=True, ex=300):  # 5 min max
+        logger.info("[EMAIL_TASK] Déjà en cours sur un autre worker, ignoré")
+        return {"status": "skipped", "reason": "lock actif"}
+
     try:
         from candidat.email_utils import email_candidature_loader
 
-        rc    = get_redis_connection("default")
         count = email_candidature_loader(rc=rc)
-
         logger.info("[EMAIL_TASK] %d CV téléchargé(s) et dispatché(s)", count)
         return {"emails_loaded": count}
 
@@ -121,6 +122,8 @@ def load_emails_task(self):
         logger.exception("[EMAIL_TASK] Erreur : %s", exc)
         raise self.retry(exc=exc)
 
+    finally:
+        rc.delete(lock_key)  # toujours libéré, même en cas d'erreur
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TÂCHE : watchdog

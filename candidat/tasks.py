@@ -141,8 +141,10 @@ def load_emails_task(self):
     try:
         from candidat.email_utils import email_candidature_loader
 
-        count = email_candidature_loader(rc=rc)
-        logger.info("[EMAIL_TASK] %d CV téléchargé(s) et dispatché(s)", count)
+        # email_candidature_loader télécharge les CVs dans SAVE_FOLDER.
+        # Le watchdog se charge ensuite de les dispatcher via _dispatch_cv.
+        count = email_candidature_loader()
+        logger.info("[EMAIL_TASK] %d CV téléchargé(s)", count)
         return {"emails_loaded": count}
 
     except Exception as exc:
@@ -150,7 +152,7 @@ def load_emails_task(self):
         raise self.retry(exc=exc)
 
     finally:
-        rc.delete(lock_key) 
+        rc.delete(lock_key)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TÂCHE : watchdog

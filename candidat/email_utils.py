@@ -8,7 +8,6 @@ import requests
 from dotenv import load_dotenv
 from django.conf import settings
 
-from candidat.utils import save_candidat_from_cv_path
 from aiagent.auths.auth import get_token
 from aiagent.auths.config import CACHE_FILE
 from aiagent.auths.config import GRAPH_BASE, SHARED_MAILBOX
@@ -17,13 +16,13 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-SAVE_FOLDER    = os.path.join(settings.MEDIA_ROOT, "cv_temps")
-CV_EXTENSIONS  = re.compile(r'\.(pdf|docx|doc)$', re.IGNORECASE)
-SUBJECT_FILTER = re.compile(r"candidature", re.IGNORECASE)
-CV_NAME_RE     = re.compile(r'\bcv\b', re.IGNORECASE)
-DELTA_FILE     = CACHE_FILE
-
-MAILBOX = SHARED_MAILBOX
+SAVE_FOLDER     = os.path.join(settings.MEDIA_ROOT, "cv_temps")
+CV_EXTENSIONS   = re.compile(r'\.(pdf|docx|doc)$', re.IGNORECASE)
+SUBJECT_FILTER  = re.compile(r"candidature", re.IGNORECASE)
+CV_NAME_RE      = re.compile(r'\bcv\b', re.IGNORECASE)
+DELTA_FILE      = CACHE_FILE
+MAILBOX         = SHARED_MAILBOX
+FIRST_RUN_LIMIT = 24
 
 
 # ── HTTP ───────────────────────────────────────────────────────────────────────
@@ -93,47 +92,9 @@ def select_cv_attachment(attachments: list[dict]) -> dict | None:
         return None
 
 
-def _safe_remove(path: str) -> None:
-    try:
-        if path and os.path.exists(path):
-            os.remove(path)
-    except Exception as exc:
-        logger.warning("Impossible de supprimer %s : %s", path, exc)
-
-
-# ── CV processing ──────────────────────────────────────────────────────────────
-
-def process_cv_file(file_path: str) -> tuple[bool, str]:
-    if not file_path or not os.path.isfile(file_path):
-        logger.error("[PROCESS] Fichier introuvable : %s", file_path)
-        return False, "Fichier introuvable"
-
-    try:
-        logger.info("[PROCESS] Traitement : %s", file_path)
-        result = save_candidat_from_cv_path(file_path)
-
-        if not result:
-            raise ValueError("save_candidat_from_cv_path a retourné un résultat vide.")
-
-        candidat, created = result
-        status = "Créé" if created else "Mis à jour"
-        logger.info("[PROCESS] %s : %s", status, candidat.nom_complet)
-        _safe_remove(file_path)
-        return True, f"{status} : {candidat.nom_complet}"
-
-    except (ValueError, FileNotFoundError) as exc:
-        logger.warning("[PROCESS] CV invalide — %s : %s", file_path, exc)
-        _safe_remove(file_path)
-        return False, str(exc)
-
-    except Exception as exc:
-        logger.exception("[PROCESS] Erreur inattendue sur %s : %s", file_path, exc)
-        return False, str(exc)
-
-
 # ── Message processing ─────────────────────────────────────────────────────────
 
-def _process_message(token: str, msg: dict, rc) -> bool:
+def _process_message(token: str, msg: dict) -> bool:
     msg_id  = msg["id"]
     subject = msg.get("subject") or ""
 
@@ -188,21 +149,17 @@ def _process_message(token: str, msg: dict, rc) -> bool:
         logger.error("[EMAIL] Erreur écriture %s : %s", filename, exc)
         return False
 
-    if rc is not None:
-        from candidat.tasks import _dispatch_cv
-        _dispatch_cv(rc, filepath, session_folder=None)
-
     return True
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 
-def email_candidature_loader(rc=None) -> int:
+def email_candidature_loader() -> int:
     """
-    Synchronise la boîte recrutement via Graph API Delta Query.
-    Premier appel : parcourt tout l'inbox.
-    Appels suivants : uniquement les nouveaux mails depuis le dernier run.
-    Retourne le nombre de CV téléchargés.
+    Télécharge les CVs (pdf/docx/doc) des emails dont le sujet contient "candidature".
+    Premier run  : traite les FIRST_RUN_LIMIT derniers emails.
+    Runs suivants : traite uniquement les nouveaux emails depuis le dernier run.
+    Retourne le nombre de CVs téléchargés.
     """
     try:
         os.makedirs(SAVE_FOLDER, exist_ok=True)
@@ -214,17 +171,19 @@ def email_candidature_loader(rc=None) -> int:
     except Exception as exc:
         raise RuntimeError(f"Impossible d'obtenir le token Graph : {exc}") from exc
 
-    delta_token  = _load_delta()
-    first_params = {"$select": "id,subject,hasAttachments"}
+    delta_token = _load_delta()
+    params      = {"$select": "id,subject,hasAttachments"}
 
     if delta_token:
-        first_params["$deltatoken"] = delta_token
+        params["$deltatoken"] = delta_token
+        url = _url("mailFolders", "inbox", "messages", "delta")
         logger.info("[EMAIL] Reprise depuis le dernier sync")
     else:
-        logger.info("[EMAIL] Premier run — lecture complète de l'inbox")
+        params["$top"]     = FIRST_RUN_LIMIT
+        params["$orderby"] = "receivedDateTime desc"
+        url = _url("mailFolders", "inbox", "messages")
+        logger.info("[EMAIL] Premier run — %d derniers emails", FIRST_RUN_LIMIT)
 
-    url      = _url("mailFolders", "inbox", "messages", "delta")
-    params   = first_params
     cv_count = 0
     page     = 0
 
@@ -243,14 +202,25 @@ def email_candidature_loader(rc=None) -> int:
         logger.info("[EMAIL] Page %d — %d message(s)", page, len(messages))
 
         for msg in messages:
-            if _process_message(token, msg, rc):
+            if msg.get("hasAttachments") and _process_message(token, msg):
                 cv_count += 1
 
         if delta_link:
             _save_delta(delta_link.split("$deltatoken=")[-1])
+        elif not delta_token and not next_url:
+            # Premier run : initialise le delta token à la position actuelle
+            try:
+                init_data = _get(token, _url("mailFolders", "inbox", "messages", "delta"),
+                                 {"$select": "id", "$deltatoken": "latest"})
+                init_link = init_data.get("@odata.deltaLink", "")
+                if init_link:
+                    _save_delta(init_link.split("$deltatoken=")[-1])
+                    logger.info("[EMAIL] Delta token initialisé")
+            except Exception as exc:
+                logger.warning("[EMAIL] Impossible d'initialiser le delta token : %s", exc)
 
         url    = next_url
         params = None
 
-    logger.info("[EMAIL] Total CV téléchargés : %d", cv_count)
+    logger.info("[EMAIL] Total CVs téléchargés : %d", cv_count)
     return cv_count

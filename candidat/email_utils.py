@@ -1,31 +1,32 @@
-import json
 import logging
 import os
 import re
-import time
 
 import requests
 from dotenv import load_dotenv
 from django.conf import settings
 
+from .models import Configuration
+from candidat.utils import save_candidat_from_cv_path
+
+# ── Auth (même pattern que tool) ──────────────────────────────────────────────
 from aiagent.auths.auth import get_token
-from aiagent.auths.config import CACHE_FILE
-from aiagent.auths.config import GRAPH_BASE, SHARED_MAILBOX
+from aiagent.auths.config import GRAPH_BASE
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-SAVE_FOLDER     = os.path.join(settings.MEDIA_ROOT, "cv_temps")
+SAVE_FOLDER     = os.path.join(settings.MEDIA_ROOT, "candidatures_email")
+ARCHIVE_FOLDER  = "Archive"          # nom du dossier Mail cible
 CV_EXTENSIONS   = re.compile(r'\.(pdf|docx|doc)$', re.IGNORECASE)
 SUBJECT_FILTER  = re.compile(r"candidature", re.IGNORECASE)
 CV_NAME_RE      = re.compile(r'\bcv\b', re.IGNORECASE)
-DELTA_FILE      = CACHE_FILE
-MAILBOX         = SHARED_MAILBOX
-FIRST_RUN_LIMIT = 24
+
+MAILBOX = "recrutement@deliorgroup.com"
 
 
-# ── HTTP ───────────────────────────────────────────────────────────────────────
+# ── Helpers HTTP ──────────────────────────────────────────────────────────────
 
 def _h(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
@@ -35,47 +36,31 @@ def _url(*parts: str) -> str:
     return f"{GRAPH_BASE}/users/{MAILBOX}/" + "/".join(parts)
 
 
-def _get(token: str, url: str, params: dict = None) -> dict:
-    for attempt in range(5):
-        resp = requests.get(url, headers=_h(token), params=params)
-        if resp.status_code == 429:
-            wait = int(resp.headers.get("Retry-After", 10))
-            logger.warning("[HTTP] Throttled — attente %ds (tentative %d)", wait, attempt + 1)
-            time.sleep(wait)
-            continue
-        resp.raise_for_status()
-        return resp.json()
-    raise RuntimeError("Trop de tentatives — API Graph non disponible")
+# ── Dossier Archive ───────────────────────────────────────────────────────────
+
+def _resolve_or_create_folder(token: str, display_name: str) -> str:
+    """Retourne l'ID Graph du dossier (le crée s'il n'existe pas)."""
+    resp = requests.get(
+        _url("mailFolders"),
+        headers=_h(token),
+        params={"$top": 100, "$select": "id,displayName"},
+    )
+    resp.raise_for_status()
+    for f in resp.json().get("value", []):
+        if f["displayName"].lower() == display_name.lower():
+            return f["id"]
+
+    # Créer le dossier
+    resp = requests.post(
+        _url("mailFolders"),
+        headers={**_h(token), "Content-Type": "application/json"},
+        json={"displayName": display_name},
+    )
+    resp.raise_for_status()
+    return resp.json()["id"]
 
 
-# ── Delta token ────────────────────────────────────────────────────────────────
-
-def _load_delta() -> str | None:
-    if not os.path.exists(DELTA_FILE):
-        return None
-    try:
-        return json.loads(open(DELTA_FILE).read()).get(MAILBOX)
-    except Exception as exc:
-        logger.warning("[DELTA] Lecture échouée : %s", exc)
-        return None
-
-
-def _save_delta(delta_token: str) -> None:
-    data = {}
-    if os.path.exists(DELTA_FILE):
-        try:
-            data = json.loads(open(DELTA_FILE).read())
-        except Exception:
-            pass
-    data[MAILBOX] = delta_token
-    try:
-        with open(DELTA_FILE, "w") as f:
-            json.dump(data, f, indent=2)
-    except Exception as exc:
-        logger.warning("[DELTA] Sauvegarde échouée : %s", exc)
-
-
-# ── Attachments ────────────────────────────────────────────────────────────────
+# ── Sélection de la pièce jointe CV ──────────────────────────────────────────
 
 def select_cv_attachment(attachments: list[dict]) -> dict | None:
     try:
@@ -88,78 +73,60 @@ def select_cv_attachment(attachments: list[dict]) -> dict | None:
                 return att
         return attachments[0]
     except Exception as exc:
-        logger.warning("[SELECT_CV] Erreur : %s", exc)
+        logger.warning("[SELECT_CV] Erreur sélection pièce jointe : %s", exc)
         return None
 
 
-# ── Message processing ─────────────────────────────────────────────────────────
+# ── Suppression sécurisée ─────────────────────────────────────────────────────
 
-def _process_message(token: str, msg: dict) -> bool:
-    msg_id  = msg["id"]
-    subject = msg.get("subject") or ""
-
-    if not SUBJECT_FILTER.search(subject):
-        return False
-
-    logger.info("[EMAIL] Traitement : %s", subject)
-
-    # Pièces jointes
+def _safe_remove(path: str) -> None:
     try:
-        att_data        = _get(token, _url("messages", msg_id, "attachments"),
-                               params={"$select": "id,name,contentType,size"})
-        raw_attachments = att_data.get("value", [])
+        if path and os.path.exists(path):
+            os.remove(path)
+            logger.debug("Fichier supprimé : %s", path)
     except Exception as exc:
-        logger.exception("[EMAIL] Erreur pièces jointes msg %s : %s", msg_id, exc)
-        return False
+        logger.warning("Impossible de supprimer %s : %s", path, exc)
 
-    attachments = [a for a in raw_attachments if CV_EXTENSIONS.search(a.get("name", ""))]
-    cv_att      = select_cv_attachment(attachments)
 
-    if cv_att is None:
-        logger.info("[EMAIL] Mail %s ignoré — aucune pièce jointe valide", msg_id)
-        return False
+# ── Traitement d'un fichier CV ────────────────────────────────────────────────
 
-    skipped = [a["name"] for a in attachments if a is not cv_att]
-    if skipped:
-        logger.info("[EMAIL] Pièce(s) ignorée(s) : %s", skipped)
+def process_cv_file(file_path: str) -> tuple[bool, str]:
+    if not file_path or not os.path.isfile(file_path):
+        logger.error("[PROCESS] Fichier introuvable : %s", file_path)
+        return False, "Fichier introuvable"
 
-    filename = cv_att["name"]
-    filepath = os.path.join(SAVE_FOLDER, filename)
-
-    if os.path.exists(filepath):
-        logger.info("[EMAIL] CV déjà présent, ignoré : %s", filepath)
-        return False
-
-    # Téléchargement
     try:
-        dl_resp = requests.get(
-            _url("messages", msg_id, "attachments", cv_att["id"], "$value"),
-            headers=_h(token),
-        )
-        dl_resp.raise_for_status()
+        logger.info("[PROCESS] Traitement : %s", file_path)
+        result = save_candidat_from_cv_path(file_path)
+
+        if not result:
+            raise ValueError("save_candidat_from_cv_path a retourné un résultat vide.")
+
+        candidat, created = result
+        status = "Créé" if created else "Mis à jour"
+        logger.info("[PROCESS] %s : %s", status, candidat.nom_complet)
+        _safe_remove(file_path)
+        return True, f"{status} : {candidat.nom_complet}"
+
+    except (ValueError, FileNotFoundError) as exc:
+        logger.warning("[PROCESS] CV invalide — %s : %s", file_path, exc)
+        _safe_remove(file_path)
+        return False, str(exc)
+
     except Exception as exc:
-        logger.error("[EMAIL] Téléchargement échoué %s : %s", filename, exc)
-        return False
-
-    try:
-        with open(filepath, "wb") as f:
-            f.write(dl_resp.content)
-        logger.info("[EMAIL] CV sauvegardé : %s", filepath)
-    except OSError as exc:
-        logger.error("[EMAIL] Erreur écriture %s : %s", filename, exc)
-        return False
-
-    return True
+        logger.exception("[PROCESS] Erreur inattendue sur %s : %s", file_path, exc)
+        return False, str(exc)
 
 
-# ── Entry point ────────────────────────────────────────────────────────────────
+# ── Loader principal ──────────────────────────────────────────────────────────
 
 def email_candidature_loader() -> int:
     """
-    Télécharge les CVs (pdf/docx/doc) des emails dont le sujet contient "candidature".
-    Premier run  : traite les FIRST_RUN_LIMIT derniers emails.
-    Runs suivants : traite uniquement les nouveaux emails depuis le dernier run.
-    Retourne le nombre de CVs téléchargés.
+    Lit les emails non lus de la boîte recrutement via Graph API,
+    télécharge les pièces jointes CV (pdf/docx/doc) des mails dont
+    le sujet contient « candidature », puis déplace le mail vers Archive.
+
+    Retourne le nombre de CV téléchargés.
     """
     try:
         os.makedirs(SAVE_FOLDER, exist_ok=True)
@@ -171,56 +138,125 @@ def email_candidature_loader() -> int:
     except Exception as exc:
         raise RuntimeError(f"Impossible d'obtenir le token Graph : {exc}") from exc
 
-    delta_token = _load_delta()
-    params      = {"$select": "id,subject,hasAttachments"}
+    # Résoudre (ou créer) le dossier Archive une seule fois
+    try:
+        archive_id = _resolve_or_create_folder(token, ARCHIVE_FOLDER)
+    except Exception as exc:
+        raise RuntimeError(f"Impossible de résoudre le dossier Archive : {exc}") from exc
 
-    if delta_token:
-        params["$deltatoken"] = delta_token
-        url = _url("mailFolders", "inbox", "messages", "delta")
-        logger.info("[EMAIL] Reprise depuis le dernier sync")
-    else:
-        params["$top"]     = FIRST_RUN_LIMIT
-        params["$orderby"] = "receivedDateTime desc"
-        url = _url("mailFolders", "inbox", "messages")
-        logger.info("[EMAIL] Premier run — %d derniers emails", FIRST_RUN_LIMIT)
+    # ── Récupérer les messages non lus de l'inbox ─────────────────────────────
+    try:
+        resp = requests.get(
+            _url("mailFolders", "inbox", "messages"),
+            headers=_h(token),
+            params={
+                "$filter": "isRead eq false",
+                "$top": 50,
+                "$select": "id,subject,isRead",
+            },
+        )
+        resp.raise_for_status()
+        messages = resp.json().get("value", [])
+    except Exception as exc:
+        logger.exception("[EMAIL] Erreur récupération messages : %s", exc)
+        return 0
 
+    logger.info("[EMAIL] %d mail(s) non lu(s)", len(messages))
     cv_count = 0
-    page     = 0
 
-    while url:
-        page += 1
+    for msg in messages:
+        msg_id  = msg["id"]
+        subject = msg.get("subject") or ""
+        saved_files: list[str] = []
+
+        # ── Filtre sujet ──────────────────────────────────────────────────────
+        if not SUBJECT_FILTER.search(subject):
+            continue
+        logger.info("[EMAIL] Traitement : %s", subject)
+
+        # ── Récupérer les pièces jointes (metadata seulement) ────────────────
+        # Graph rejette contentBytes dans $select → contenu récupéré via /$value
         try:
-            data = _get(token, url, params)
+            att_resp = requests.get(
+                _url("messages", msg_id, "attachments"),
+                headers=_h(token),
+                params={"$select": "id,name,contentType,size"},
+            )
+            att_resp.raise_for_status()
+            raw_attachments = att_resp.json().get("value", [])
         except Exception as exc:
-            logger.exception("[EMAIL] Erreur page %d : %s", page, exc)
-            break
+            logger.exception("[EMAIL] Erreur récupération pièces jointes msg %s : %s", msg_id, exc)
+            continue
 
-        messages   = [m for m in data.get("value", []) if not m.get("@removed")]
-        next_url   = data.get("@odata.nextLink")
-        delta_link = data.get("@odata.deltaLink", "")
+        # Filtrer sur l'extension
+        attachments = [
+            a for a in raw_attachments
+            if CV_EXTENSIONS.search(a.get("name", ""))
+        ]
 
-        logger.info("[EMAIL] Page %d — %d message(s)", page, len(messages))
+        cv_att = select_cv_attachment(attachments)
+        if cv_att is None:
+            logger.info("[EMAIL] Mail %s ignoré — aucune pièce jointe valide", msg_id)
+            continue
 
-        for msg in messages:
-            if msg.get("hasAttachments") and _process_message(token, msg):
-                cv_count += 1
+        skipped = [a["name"] for a in attachments if a is not cv_att]
+        if skipped:
+            logger.info("[EMAIL] Pièce(s) ignorée(s) : %s", skipped)
 
-        if delta_link:
-            _save_delta(delta_link.split("$deltatoken=")[-1])
-        elif not delta_token and not next_url:
-            # Premier run : initialise le delta token à la position actuelle
-            try:
-                init_data = _get(token, _url("mailFolders", "inbox", "messages", "delta"),
-                                 {"$select": "id", "$deltatoken": "latest"})
-                init_link = init_data.get("@odata.deltaLink", "")
-                if init_link:
-                    _save_delta(init_link.split("$deltatoken=")[-1])
-                    logger.info("[EMAIL] Delta token initialisé")
-            except Exception as exc:
-                logger.warning("[EMAIL] Impossible d'initialiser le delta token : %s", exc)
+        # ── Télécharger le contenu via /$value (toutes tailles) ──────────────
+        try:
+            dl_resp = requests.get(
+                _url("messages", msg_id, "attachments", cv_att["id"], "$value"),
+                headers=_h(token),
+            )
+            dl_resp.raise_for_status()
+            content_bytes: bytes = dl_resp.content
+        except Exception as exc:
+            logger.error("[EMAIL] Téléchargement pièce jointe échoué %s : %s", cv_att["name"], exc)
+            continue
 
-        url    = next_url
-        params = None
+        # ── Sauvegarder sur disque ────────────────────────────────────────────
+        filename = cv_att["name"]
+        filepath = os.path.join(SAVE_FOLDER, filename)
 
-    logger.info("[EMAIL] Total CVs téléchargés : %d", cv_count)
+        if os.path.exists(filepath):
+            base, ext = os.path.splitext(filename)
+            counter = 1
+            while os.path.exists(filepath):
+                filepath = os.path.join(SAVE_FOLDER, f"{base}_{counter}{ext}")
+                counter += 1
+
+        try:
+            with open(filepath, "wb") as f:
+                f.write(content_bytes)
+            saved_files.append(filepath)
+            logger.info("[EMAIL] CV sauvegardé : %s", filepath)
+            cv_count += 1
+        except OSError as exc:
+            logger.error("[EMAIL] Erreur écriture %s : %s", filename, exc)
+            continue
+
+        # ── Marquer comme lu + déplacer vers Archive ──────────────────────────
+        try:
+            requests.patch(
+                _url("messages", msg_id),
+                headers={**_h(token), "Content-Type": "application/json"},
+                json={"isRead": True},
+            )
+            move_resp = requests.post(
+                _url("messages", msg_id, "move"),
+                headers={**_h(token), "Content-Type": "application/json"},
+                json={"destinationId": archive_id},
+            )
+            if move_resp.ok:
+                logger.info("[EMAIL] Mail %s archivé", msg_id)
+            else:
+                logger.warning(
+                    "[EMAIL] Déplacement vers Archive échoué pour %s : %s",
+                    msg_id, move_resp.text,
+                )
+        except Exception as exc:
+            logger.warning("[EMAIL] Erreur archivage mail %s : %s", msg_id, exc)
+
+    logger.info("[EMAIL] Total CV téléchargés : %d", cv_count)
     return cv_count

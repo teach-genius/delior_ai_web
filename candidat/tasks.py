@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # ── Constantes ────────────────────────────────────────────────────────────────
 
 CV_EXTENSIONS = {".pdf", ".docx", ".doc"}
-LOCK_TTL      = 1800 
+LOCK_TTL      = 600
 
 
 # ── Helpers Redis lock ────────────────────────────────────────────────────────
@@ -22,10 +22,6 @@ def _lock_key(path: str) -> str:
 
 
 def _acquire_lock(rc, path: str, task_id: str) -> bool:
-    """
-    Pose un verrou atomique NX/EX sur le fichier.
-    Retourne True si le verrou a été acquis, False s'il était déjà posé.
-    """
     return bool(rc.set(_lock_key(path), task_id, nx=True, ex=LOCK_TTL))
 
 
@@ -37,13 +33,24 @@ def _is_locked(rc, path: str) -> bool:
     return bool(rc.exists(_lock_key(path)))
 
 
+def _safe_dispatch(rc, path: str, session_folder: str | None = None) -> bool:
+    """
+    Dispatche process_cv_task uniquement si :
+    - le fichier existe encore sur disque
+    - aucun verrou actif sur ce fichier
+    Retourne True si dispatché.
+    """
+    if not os.path.isfile(path):
+        return False
+    if _is_locked(rc, path):
+        return False
+    process_cv_task.delay(path, session_folder=session_folder)
+    return True
+
+
 # ── Nettoyage dossier session ─────────────────────────────────────────────────
 
 def _cleanup_session_if_empty(session_folder: str | None) -> None:
-    """
-    Supprime le dossier session s'il n'existe plus ou s'il est vide.
-    Appel silencieux — ne lève jamais d'exception.
-    """
     if not session_folder:
         return
     try:
@@ -58,6 +65,7 @@ def _cleanup_session_if_empty(session_folder: str | None) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 # TÂCHE : traitement d'un CV
 # ─────────────────────────────────────────────────────────────────────────────
+
 @shared_task(
     bind=True,
     max_retries=3,
@@ -90,7 +98,6 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         return {"status": "success", "message": msg}
 
     except ValueError as e:
-        # Données insuffisantes — pas de retry
         logger.warning("[CELERY] CV ignoré : %s", e)
         return {"status": "ignored", "reason": str(e)}
 
@@ -99,10 +106,10 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
         raise self.retry(exc=exc)
 
     finally:
-        # Toujours exécuté — lock + cleanup garantis
         _release_lock(rc, path)
         _cleanup_session_if_empty(session_folder)
-        
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # TÂCHE : chargement des emails
 # ─────────────────────────────────────────────────────────────────────────────
@@ -115,32 +122,31 @@ def process_cv_task(self, path: str, session_folder: str | None = None):
 )
 def load_emails_task(self):
     """
-    Télécharge les candidatures reçues par email et dispatche leur traitement.
-
     Flux :
-        1. email_candidature_loader() → télécharge les CVs dans candidatures_email/
-        2. Scanne candidatures_email/ et dispatche process_cv_task pour chaque fichier
-           non encore verrouillé (évite les doublons si la tâche tourne en parallèle).
+        1. email_candidature_loader() — télécharge les CVs nouveaux dans
+           candidatures_email/ (lecture seule Graph API, delta token).
+        2. Scanne candidatures_email/ et dispatche process_cv_task pour chaque
+           fichier présent sur disque et sans verrou actif.
+           → 1 worker par fichier garanti via _safe_dispatch.
     """
     try:
         from candidat.email_utils import email_candidature_loader, SAVE_FOLDER
 
         count = email_candidature_loader()
-        logger.info("[EMAIL_TASK] %d email(s) traité(s)", count)
+        logger.info("[EMAIL_TASK] %d CV téléchargé(s)", count)
 
-        # Dispatch des fichiers téléchargés
-        rc             = get_redis_connection("default")
-        email_folder   = Path(SAVE_FOLDER)
-        dispatched     = 0
+        rc           = get_redis_connection("default")
+        email_folder = Path(SAVE_FOLDER)
+        dispatched   = 0
 
         if email_folder.is_dir():
             for f in email_folder.iterdir():
                 if f.is_file() and f.suffix.lower() in CV_EXTENSIONS:
-                    if not _is_locked(rc, str(f)):
-                        process_cv_task.delay(str(f), session_folder=None)
+                    if _safe_dispatch(rc, str(f)):
                         dispatched += 1
+                        logger.info("[EMAIL_TASK] Dispatché : %s", f.name)
 
-        logger.info("[EMAIL_TASK] %d fichier(s) dispatchés", dispatched)
+        logger.info("[EMAIL_TASK] %d fichier(s) dispatché(s)", dispatched)
         return {"emails_loaded": count, "dispatched": dispatched}
 
     except Exception as exc:
@@ -155,17 +161,18 @@ def load_emails_task(self):
 @shared_task(acks_late=True)
 def watchdog_task():
     """
-    Tâche de surveillance exécutée toutes les 5 minutes.
+    Surveillance toutes les 5 minutes.
 
     Actions :
-        1. Scanne candidatures_email/ — relance les fichiers sans verrou actif.
-        2. Scanne cv_temps/*/ — relance les fichiers orphelins, supprime les
-           dossiers sessions devenus vides (tous les CVs traités avec succès).
+        1. candidatures_email/ — relaie les fichiers orphelins (verrou expiré
+           ou dispatch raté), en vérifiant que le fichier existe encore.
+        2. cv_temps/*/         — relaie les fichiers orphelins des sessions
+           upload, nettoie les dossiers sessions devenus vides.
 
     Cas couverts :
-        - Worker crashé en cours de traitement (verrou expiré, fichier restant).
-        - Dispatch raté lors d'un upload (fichier présent, pas de tâche en queue).
-        - Dossier session non nettoyé (ex : cleanup appelé après un crash).
+        - Worker crashé (verrou expiré, fichier toujours présent).
+        - Dispatch raté lors du load_emails_task.
+        - Dossier session non nettoyé après un crash.
     """
     rc         = get_redis_connection("default")
     media_root = Path(settings.MEDIA_ROOT)
@@ -177,8 +184,7 @@ def watchdog_task():
     if email_folder.is_dir():
         for f in email_folder.iterdir():
             if f.is_file() and f.suffix.lower() in CV_EXTENSIONS:
-                if not _is_locked(rc, str(f)):
-                    process_cv_task.delay(str(f), session_folder=None)
+                if _safe_dispatch(rc, str(f)):
                     launched += 1
                     logger.info("[WATCHDOG] Relance email : %s", f.name)
 
@@ -195,15 +201,13 @@ def watchdog_task():
             ]
 
             if not files:
-                # Session terminée (ou corrompue sans fichiers) → nettoyage
                 shutil.rmtree(str(session_dir), ignore_errors=True)
                 cleaned += 1
                 logger.info("[WATCHDOG] Dossier session vide supprimé : %s", session_dir.name)
                 continue
 
             for f in files:
-                if not _is_locked(rc, str(f)):
-                    process_cv_task.delay(str(f), session_folder=str(session_dir))
+                if _safe_dispatch(rc, str(f), session_folder=str(session_dir)):
                     launched += 1
                     logger.info("[WATCHDOG] Relance session : %s / %s", session_dir.name, f.name)
 
